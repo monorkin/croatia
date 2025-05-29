@@ -9,7 +9,9 @@ Gem::Specification.new do |spec|
   spec.email = [ "hey@stanko.io" ]
 
   spec.summary = "A gem for performing tasks specific to Croatia"
-  spec.description = "TODO: Write a longer description or delete this line."
+  spec.description = <<~DESC
+  Croatia is a gem that contains various utilities for performing Croatia-specific actions - like PIN/OIB validation
+  DESC
   spec.homepage = "https://github.com/monorkin/croatia"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.1.0"
