@@ -10,7 +10,8 @@ Gem::Specification.new do |spec|
 
   spec.summary = "A gem for performing tasks specific to Croatia"
   spec.description = <<~DESC
-  Croatia is a gem that contains various utilities for performing Croatia-specific actions - like PIN/OIB validation
+  Croatia is a gem that contains various utilities for performing Croatia-specific actions like:
+  - PIN/OIB validation
   DESC
   spec.homepage = "https://github.com/monorkin/croatia"
   spec.license = "MIT"
