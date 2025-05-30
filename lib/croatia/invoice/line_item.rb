@@ -29,7 +29,7 @@ class Croatia::Invoice::LineItem
       raise ArgumentError, "Unit price must be a non-negative number"
     end
 
-    @unit_price = value.to_d
+    @unit_price = value.to_d.round(2, BigDecimal::ROUND_HALF_UP)
   end
 
   def tax_rate=(value)
@@ -37,18 +37,18 @@ class Croatia::Invoice::LineItem
       raise ArgumentError, "Tax rate must be a non-negative number between 0 and 1"
     end
 
-    @tax_rate = value.to_d
+    @tax_rate = value.to_d.round(2, BigDecimal::ROUND_HALF_UP)
   end
 
   def subtotal
-    quantity * unit_price
+    (quantity * unit_price).round(2, BigDecimal::ROUND_HALF_UP)
   end
 
   def tax
-    subtotal * tax_rate
+    (subtotal * tax_rate).round(2, BigDecimal::ROUND_HALF_UP)
   end
 
   def total
-    subtotal + tax
+    (subtotal + tax).round(2, BigDecimal::ROUND_HALF_UP)
   end
 end

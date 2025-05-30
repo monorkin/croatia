@@ -131,10 +131,9 @@ class Croatia::Invoice::LineItemTest < Minitest::Test
     assert_equal 0, line_item.total
   end
 
-  def test_floating_point_calculation_errors
-    # Test various scenarios that would cause floating point precision errors
-    # without BigDecimal usage
-
+  # Test various scenarios that would cause floating point precision errors
+  # and verify proper rounding to 2 decimal places with half-up rounding
+  def test_floating_point_calculation_errors_with_rounding
     # Case 1: Small decimal multiplication
     item1 = Croatia::Invoice::LineItem.new(
       description: "Small decimals",
@@ -143,39 +142,53 @@ class Croatia::Invoice::LineItemTest < Minitest::Test
     )
     assert_equal BigDecimal("0.02"), item1.subtotal
 
-    # Case 2: Repeating decimal calculations
+    # Case 2: Repeating decimal calculations with rounding
     item2 = Croatia::Invoice::LineItem.new(
       description: "Repeating decimals",
       quantity: 1.0 / 3.0,
       unit_price: 3.0,
       tax_rate: 1.0 / 3.0
     )
-    assert_kind_of BigDecimal, item2.subtotal
-    assert_kind_of BigDecimal, item2.tax
-    assert_kind_of BigDecimal, item2.total
+    # 1/3 * 3.0 should be exactly 1.0, rounded to 2 decimals
+    assert_equal BigDecimal("1.00"), item2.subtotal
+    # tax_rate is rounded to 0.33, so tax = 1.00 * 0.33 = 0.33
+    assert_equal BigDecimal("0.33"), item2.tax
+    assert_equal BigDecimal("1.33"), item2.total
 
-    # Case 3: Complex calculation with potential precision loss
+    # Case 3: Complex calculation with rounding
     item3 = Croatia::Invoice::LineItem.new(
       description: "Complex calculation",
       quantity: 3.33,
       unit_price: 1.11,
       tax_rate: 0.22
     )
-    expected_subtotal = BigDecimal("3.33") * BigDecimal("1.11")
-    expected_tax = expected_subtotal * BigDecimal("0.22")
-    expected_total = expected_subtotal + expected_tax
-    assert_equal expected_subtotal, item3.subtotal
-    assert_equal expected_tax, item3.tax
-    assert_equal expected_total, item3.total
+    # 3.33 * 1.11 = 3.6963, rounded to 3.70
+    assert_equal BigDecimal("3.70"), item3.subtotal
+    # 3.70 * 0.22 = 0.814, rounded to 0.81
+    assert_equal BigDecimal("0.81"), item3.tax
+    # 3.70 + 0.81 = 4.51
+    assert_equal BigDecimal("4.51"), item3.total
 
-    # Case 4: Large numbers maintaining precision
+    # Case 4: Test half-up rounding behavior specifically
     item4 = Croatia::Invoice::LineItem.new(
-      description: "Large numbers",
-      quantity: 999999.99,
-      unit_price: 999999.99,
+      description: "Half-up rounding test",
+      quantity: 1,
+      unit_price: 1.125,  # Should round up to 1.13
       tax_rate: 0.25
     )
-    expected_large_subtotal = BigDecimal("999999.99") * BigDecimal("999999.99")
-    assert_equal expected_large_subtotal, item4.subtotal
+    assert_equal BigDecimal("1.13"), item4.unit_price
+    assert_equal BigDecimal("1.13"), item4.subtotal
+    assert_equal BigDecimal("0.28"), item4.tax  # 1.13 * 0.25 = 0.2825, rounds to 0.28
+    assert_equal BigDecimal("1.41"), item4.total
+
+    # Case 5: Ensure all results are BigDecimal with 2 decimal precision
+    assert_kind_of BigDecimal, item1.subtotal
+    assert_kind_of BigDecimal, item2.tax
+    assert_kind_of BigDecimal, item3.total
+
+    # Verify scale is 2 for currency precision
+    assert_equal 2, item1.subtotal.scale
+    assert_equal 2, item2.tax.scale
+    assert_equal 2, item3.total.scale
   end
 end
