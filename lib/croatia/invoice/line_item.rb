@@ -5,7 +5,7 @@ require "bigdecimal/util"
 
 class Croatia::Invoice::LineItem
   attr_accessor :description
-  attr_reader :quantity, :unit, :unit_price, :tax_rate, :tax_category
+  attr_reader :quantity, :unit, :unit_price, :tax_rate, :tax_category, :discount_rate
 
   def initialize(**options)
     self.description = options[:description]
@@ -17,8 +17,8 @@ class Croatia::Invoice::LineItem
   end
 
   def quantity=(value)
-    unless value.is_a?(Numeric) && value >= 0
-      raise ArgumentError, "Quantity must be a positive number"
+    unless value.is_a?(Numeric)
+      raise ArgumentError, "Quantity must be a number"
     end
 
     @quantity = value.to_d
@@ -29,7 +29,7 @@ class Croatia::Invoice::LineItem
       raise ArgumentError, "Unit price must be a non-negative number"
     end
 
-    @unit_price = value.to_d.round(2, BigDecimal::ROUND_HALF_UP)
+    @unit_price = value.to_d
   end
 
   def tax_rate=(value)
@@ -37,11 +37,55 @@ class Croatia::Invoice::LineItem
       raise ArgumentError, "Tax rate must be a non-negative number between 0 and 1"
     end
 
-    @tax_rate = value.to_d.round(2, BigDecimal::ROUND_HALF_UP)
+    @tax_rate = value.to_d
+  end
+
+  def discount_rate=(value)
+    if value.nil?
+      @discount_rate = nil
+      return
+    end
+
+    unless value.is_a?(Numeric) && value >= 0 && value <= 1
+      raise ArgumentError, "Discount rate must be a non-negative number between 0 and 1"
+    end
+
+    @discount_rate = value.to_d
+  end
+
+  def discount=(value)
+    if value.nil?
+      @discount = nil
+      return
+    end
+
+    unless value.is_a?(Numeric) && value >= 0
+      raise ArgumentError, "Discount must be a non-negative number"
+    end
+
+    @discount = value.to_d.round(2, BigDecimal::ROUND_HALF_UP)
+  end
+
+  def discount
+    if @discount
+      @discount
+    elsif @discount_rate
+      (gross * @discount_rate).round(2, BigDecimal::ROUND_HALF_UP)
+    else
+      BigDecimal("0.0")
+    end
+  end
+
+  def cancel
+    self.quantity *= -1
+  end
+
+  def gross
+    (quantity * unit_price).round(2, BigDecimal::ROUND_HALF_UP)
   end
 
   def subtotal
-    (quantity * unit_price).round(2, BigDecimal::ROUND_HALF_UP)
+    gross - discount
   end
 
   def tax

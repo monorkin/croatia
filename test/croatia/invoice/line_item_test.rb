@@ -30,11 +30,11 @@ class Croatia::Invoice::LineItemTest < Minitest::Test
   def test_quantity_validation
     line_item = Croatia::Invoice::LineItem.new(description: "Test")
 
-    assert_raises(ArgumentError, "Quantity must be a positive number") do
-      line_item.quantity = -1
-    end
+    # Negative quantities should now be allowed
+    line_item.quantity = -1
+    assert_equal BigDecimal("-1"), line_item.quantity
 
-    assert_raises(ArgumentError, "Quantity must be a positive number") do
+    assert_raises(ArgumentError, "Quantity must be a number") do
       line_item.quantity = "invalid"
     end
   end
@@ -173,10 +173,10 @@ class Croatia::Invoice::LineItemTest < Minitest::Test
     item4 = Croatia::Invoice::LineItem.new(
       description: "Half-up rounding test",
       quantity: 1,
-      unit_price: 1.125,  # Should round up to 1.13
+      unit_price: 1.125,
       tax_rate: 0.25
     )
-    assert_equal BigDecimal("1.13"), item4.unit_price
+    assert_equal BigDecimal("1.125"), item4.unit_price
     assert_equal BigDecimal("1.13"), item4.subtotal
     assert_equal BigDecimal("0.28"), item4.tax  # 1.13 * 0.25 = 0.2825, rounds to 0.28
     assert_equal BigDecimal("1.41"), item4.total
@@ -190,5 +190,161 @@ class Croatia::Invoice::LineItemTest < Minitest::Test
     assert_equal 2, item1.subtotal.scale
     assert_equal 2, item2.tax.scale
     assert_equal 2, item3.total.scale
+  end
+
+  def test_discount_rate_functionality
+    line_item = Croatia::Invoice::LineItem.new(
+      description: "Test item",
+      quantity: 2,
+      unit_price: 10.0,
+      tax_rate: 0.25
+    )
+    
+    # Test setting discount rate
+    line_item.discount_rate = 0.1
+    assert_equal BigDecimal("0.1"), line_item.discount_rate
+    
+    # Test discount calculation with discount rate
+    assert_equal BigDecimal("20.00"), line_item.gross  # 2 * 10.0
+    assert_equal BigDecimal("2.00"), line_item.discount  # 20.0 * 0.1
+    assert_equal BigDecimal("18.00"), line_item.subtotal  # 20.0 - 2.0
+    assert_equal BigDecimal("4.50"), line_item.tax  # 18.0 * 0.25
+    assert_equal BigDecimal("22.50"), line_item.total  # 18.0 + 4.5
+    
+    # Test nil discount rate
+    line_item.discount_rate = nil
+    assert_nil line_item.discount_rate
+    assert_equal BigDecimal("0.0"), line_item.discount
+  end
+
+  def test_discount_rate_validation
+    line_item = Croatia::Invoice::LineItem.new(description: "Test")
+    
+    assert_raises(ArgumentError, "Discount rate must be a non-negative number between 0 and 1") do
+      line_item.discount_rate = -0.1
+    end
+    
+    assert_raises(ArgumentError, "Discount rate must be a non-negative number between 0 and 1") do
+      line_item.discount_rate = 1.5
+    end
+    
+    assert_raises(ArgumentError, "Discount rate must be a non-negative number between 0 and 1") do
+      line_item.discount_rate = "invalid"
+    end
+  end
+
+  def test_discount_amount_functionality
+    line_item = Croatia::Invoice::LineItem.new(
+      description: "Test item",
+      quantity: 2,
+      unit_price: 10.0,
+      tax_rate: 0.25
+    )
+    
+    # Test setting fixed discount amount
+    line_item.discount = 3.0
+    assert_equal BigDecimal("3.00"), line_item.discount
+    
+    # Test calculations with fixed discount
+    assert_equal BigDecimal("20.00"), line_item.gross
+    assert_equal BigDecimal("17.00"), line_item.subtotal  # 20.0 - 3.0
+    assert_equal BigDecimal("4.25"), line_item.tax  # 17.0 * 0.25
+    assert_equal BigDecimal("21.25"), line_item.total
+    
+    # Test nil discount
+    line_item.discount = nil
+    assert_equal BigDecimal("0.0"), line_item.discount
+    
+    # Test discount rounding
+    line_item.discount = 3.126
+    assert_equal BigDecimal("3.13"), line_item.discount
+  end
+
+  def test_discount_validation
+    line_item = Croatia::Invoice::LineItem.new(description: "Test")
+    
+    assert_raises(ArgumentError, "Discount must be a non-negative number") do
+      line_item.discount = -5.0
+    end
+    
+    assert_raises(ArgumentError, "Discount must be a non-negative number") do
+      line_item.discount = "invalid"
+    end
+  end
+
+  def test_gross_calculation
+    line_item = Croatia::Invoice::LineItem.new(
+      description: "Test item",
+      quantity: 3.33,
+      unit_price: 1.11
+    )
+    
+    # 3.33 * 1.11 = 3.6963, rounded to 3.70
+    assert_equal BigDecimal("3.70"), line_item.gross
+    assert_kind_of BigDecimal, line_item.gross
+  end
+
+  def test_cancel_method
+    line_item = Croatia::Invoice::LineItem.new(
+      description: "Test item",
+      quantity: 5,
+      unit_price: 10.0,
+      tax_rate: 0.25
+    )
+    
+    original_quantity = line_item.quantity
+    line_item.cancel
+    
+    # Quantity should be negated
+    assert_equal -original_quantity, line_item.quantity
+    assert_equal BigDecimal("-5"), line_item.quantity
+    
+    # All calculations should reflect the negative quantity
+    assert_equal BigDecimal("-50.00"), line_item.gross
+    assert_equal BigDecimal("-50.00"), line_item.subtotal
+    assert_equal BigDecimal("-12.50"), line_item.tax
+    assert_equal BigDecimal("-62.50"), line_item.total
+  end
+
+  def test_discount_priority_fixed_over_rate
+    line_item = Croatia::Invoice::LineItem.new(
+      description: "Test item",
+      quantity: 2,
+      unit_price: 10.0
+    )
+    
+    # Set both discount rate and fixed discount
+    line_item.discount_rate = 0.1  # Would give 2.0 discount
+    line_item.discount = 5.0       # Fixed discount takes priority
+    
+    assert_equal BigDecimal("5.00"), line_item.discount
+    assert_equal BigDecimal("15.00"), line_item.subtotal  # 20.0 - 5.0
+  end
+
+  def test_floating_point_with_discounts
+    # Test floating point precision with discount calculations
+    line_item = Croatia::Invoice::LineItem.new(
+      description: "Precision test with discount",
+      quantity: 3.33,
+      unit_price: 1.11,
+      tax_rate: 0.22
+    )
+    
+    line_item.discount_rate = 0.15
+    
+    # gross: 3.33 * 1.11 = 3.6963, rounded to 3.70
+    assert_equal BigDecimal("3.70"), line_item.gross
+    
+    # discount: 3.70 * 0.15 = 0.555, rounded to 0.56
+    assert_equal BigDecimal("0.56"), line_item.discount
+    
+    # subtotal: 3.70 - 0.56 = 3.14
+    assert_equal BigDecimal("3.14"), line_item.subtotal
+    
+    # tax: 3.14 * 0.22 = 0.6908, rounded to 0.69
+    assert_equal BigDecimal("0.69"), line_item.tax
+    
+    # total: 3.14 + 0.69 = 3.83
+    assert_equal BigDecimal("3.83"), line_item.total
   end
 end

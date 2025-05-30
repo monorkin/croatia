@@ -12,4 +12,9 @@ class Croatia::Invoice::Fiscalizer
     # TODO: Implement the fiscalization logic here
     puts "TODO: Fiscalize invoice #{invoice} with options: #{options}"
   end
+
+  def reverse
+    # TODO: Implement the reverse logic here
+    puts "TODO: Storno invoice #{invoice} with options: #{options}"
+  end
 end
