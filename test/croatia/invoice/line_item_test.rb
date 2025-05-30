@@ -284,7 +284,7 @@ class Croatia::Invoice::LineItemTest < Minitest::Test
     assert_kind_of BigDecimal, line_item.gross
   end
 
-  def test_cancel_method
+  def test_reverse_method
     line_item = Croatia::Invoice::LineItem.new(
       description: "Test item",
       quantity: 5,
@@ -293,7 +293,7 @@ class Croatia::Invoice::LineItemTest < Minitest::Test
     )
     
     original_quantity = line_item.quantity
-    line_item.cancel
+    line_item.reverse
     
     # Quantity should be negated
     assert_equal -original_quantity, line_item.quantity

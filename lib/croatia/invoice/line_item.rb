@@ -76,7 +76,7 @@ class Croatia::Invoice::LineItem
     end
   end
 
-  def cancel
+  def reverse
     self.quantity *= -1
   end
 
