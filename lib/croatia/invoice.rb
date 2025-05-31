@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require "bigdecimal"
+require "bigdecimal/util"
+
 class Croatia::Invoice
   autoload :Fiscalizable, "croatia/invoice/fiscalizable"
   autoload :EInvoicable, "croatia/invoice/e_invoicable"
@@ -44,15 +47,15 @@ class Croatia::Invoice
   end
 
   def subtotal
-    line_items.sum(&:subtotal)
+    line_items.sum(&:subtotal).to_d
   end
 
   def tax
-    line_items.sum(&:tax)
+    line_items.sum(&:tax).to_d
   end
 
   def total
-    line_items.sum(&:total)
+    line_items.sum(&:total).to_d
   end
 
   def total_cents

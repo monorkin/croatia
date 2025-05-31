@@ -9,4 +9,10 @@ class Croatia::Invoice::Party
     :name,
     :pin,
     :postal_code
+
+  def initialize(**options)
+    options.each do |key, value|
+      public_send("#{key}=", value)
+    end
+  end
 end

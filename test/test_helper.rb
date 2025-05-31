@@ -3,4 +3,5 @@
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 require "croatia"
 
+require "date"
 require "minitest/autorun"
