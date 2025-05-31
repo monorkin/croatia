@@ -326,4 +326,182 @@ class Croatia::InvoiceTest < Minitest::Test
     assert_equal BigDecimal("159.80"), invoice.total
     assert_equal 15980, invoice.total_cents
   end
+
+  def test_payment_barcode_with_defaults
+    invoice = Croatia::Invoice.new(
+      sequential_number: 1,
+      business_location_identifier: "OFFICE",
+      register_identifier: "CASH1",
+      currency: "EUR"
+    )
+
+    invoice.seller do |party|
+      party.name = "Test Company Ltd"
+      party.iban = "HR1234567890123456789"
+    end
+
+    invoice.add_line_item do |item|
+      item.description = "Test item"
+      item.unit_price = 100.0
+      item.tax_rate = 0.25
+    end
+
+
+    barcode = invoice.payment_barcode
+
+    assert_instance_of Croatia::PDF417, barcode
+    expected_data = [
+      "HRVHUB30",
+      "EUR",
+      "000000012500", # 125.00 EUR in cents, padded to 12 digits
+      "Test Company Ltd",
+      "HR1234567890123456789",
+      "Račun br. 1/OFFICE/CASH1",
+      nil,
+      nil,
+      nil
+    ].join("\n")
+
+    assert_equal expected_data, barcode.data
+  end
+
+  def test_payment_barcode_with_custom_params
+    invoice = Croatia::Invoice.new(
+      sequential_number: 1,
+      business_location_identifier: "OFFICE",
+      register_identifier: "CASH1",
+      currency: "EUR",
+      due_date: Date.new(2024, 12, 31)
+    )
+
+    invoice.seller do |party|
+      party.name = "Test Company Ltd"
+      party.iban = "HR1234567890123456789"
+    end
+
+    invoice.add_line_item do |item|
+      item.description = "Test item"
+      item.unit_price = 50.0
+      item.tax_rate = 0.25
+    end
+
+
+    barcode = invoice.payment_barcode(
+      name: "Custom Name",
+      iban: "HR9876543210987654321",
+      description: "Custom payment description",
+      model: "HR01",
+      reference_number: "12345-67890"
+    )
+
+    expected_data = [
+      "HRVHUB30",
+      "EUR",
+      "000000006250", # 62.50 EUR in cents
+      "Custom Name",
+      "HR9876543210987654321",
+      "Custom payment description",
+      "HR01",
+      "12345-67890",
+      "20241231"
+    ].join("\n")
+
+    assert_equal expected_data, barcode.data
+  end
+
+  def test_payment_barcode_validation_errors
+    invoice = Croatia::Invoice.new(currency: "INVALID")
+
+    assert_raises(ArgumentError, "Currency code must be 3 characters long") do
+      invoice.payment_barcode
+    end
+
+    invoice.currency = "EUR"
+    invoice.seller = Croatia::Invoice::Party.new(name: "X" * 31, iban: "HR1234567890123456789")
+
+    assert_raises(ArgumentError, "Name must be 30 characters or less") do
+      invoice.payment_barcode
+    end
+
+    invoice.seller.name = "Valid Name"
+    invoice.seller.iban = "INVALID_IBAN"
+
+    assert_raises(ArgumentError, "IBAN must be 21 characters") do
+      invoice.payment_barcode
+    end
+
+    invoice.seller.iban = "HR1234567890123456789"
+
+    assert_raises(ArgumentError, "Description must be 35 characters or less") do
+      invoice.payment_barcode(description: "X" * 36)
+    end
+
+    assert_raises(ArgumentError, "Model must be 4 characters long") do
+      invoice.payment_barcode(model: "INVALID")
+    end
+
+    assert_raises(ArgumentError, "Reference number must be 22 characters or less") do
+      invoice.payment_barcode(reference_number: "X" * 23)
+    end
+  end
+
+  def test_fiscalization_qr_code_with_unique_identifier
+    invoice = Croatia::Invoice.new(
+      unique_invoice_identifier: "12345678-1234-1234-1234-123456789012",
+      issue_date: DateTime.new(2024, 1, 15, 14, 30, 0)
+    )
+
+    invoice.add_line_item do |item|
+      item.description = "Test item"
+      item.unit_price = 123.45
+      item.tax_rate = 0.25
+    end
+
+
+    qr_code = invoice.fiscalization_qr_code
+
+    assert_instance_of Croatia::QRCode, qr_code
+
+    expected_url = "https://porezna.gov.hr/rn?datv=20240115_1430&izn=15431&jir=12345678-1234-1234-1234-123456789012"
+    assert_equal expected_url, qr_code.data
+  end
+
+  def test_fiscalization_qr_code_with_protection_code
+    invoice = Croatia::Invoice.new(
+      issuer_protection_code: "abcd1234efgh5678",
+      issue_date: DateTime.new(2024, 1, 15, 14, 30, 0)
+    )
+
+    invoice.add_line_item do |item|
+      item.description = "Test item"
+      item.unit_price = 100.0
+      item.tax_rate = 0.25
+    end
+
+
+    qr_code = invoice.fiscalization_qr_code
+
+    expected_url = "https://porezna.gov.hr/rn?datv=20240115_1430&izn=12500&zki=abcd1234efgh5678"
+    assert_equal expected_url, qr_code.data
+  end
+
+  def test_fiscalization_qr_code_validation_errors
+    invoice = Croatia::Invoice.new(issue_date: DateTime.new(2024, 1, 15, 14, 30, 0))
+
+    assert_raises(ArgumentError, "Either unique_invoice_identifier or issuer_protection_code must be provided") do
+      invoice.fiscalization_qr_code
+    end
+  end
+
+  def test_fiscalize_method_exists
+    invoice = Croatia::Invoice.new
+
+    assert_respond_to invoice, :fiscalize!
+  end
+
+  def test_reverse_method_exists
+    invoice = Croatia::Invoice.new
+
+    assert_respond_to invoice, :reverse!
+  end
 end

@@ -45,7 +45,8 @@ GEM
     parser (3.3.8.0)
       ast (~> 2.4.1)
       racc
-    pdf417 (1.0.0)
+    pdf-417 (0.9.5)
+      chunky_png (~> 1)
     pp (0.6.2)
       prettyprint
     prettyprint (0.2.0)
@@ -113,7 +114,7 @@ DEPENDENCIES
   croatia!
   irb
   minitest (~> 5.16)
-  pdf417
+  pdf-417
   rake (~> 13.0)
   rqrcode
   rubocop (~> 1.21)

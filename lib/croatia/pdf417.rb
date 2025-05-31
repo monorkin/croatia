@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Croatia::Invoice::PDF417
+class Croatia::PDF417
   def self.ensure_supported!
     return if supported?
 

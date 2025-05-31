@@ -10,8 +10,6 @@ class Croatia::Invoice
   autoload :Party, "croatia/invoice/party"
   autoload :LineItem, "croatia/invoice/line_item"
   autoload :Fiscalizer, "croatia/invoice/fiscalizer"
-  autoload :QRCode, "croatia/invoice/qr_code"
-  autoload :PDF417, "croatia/invoice/pdf417"
 
   include Croatia::Enum
   include Fiscalizable

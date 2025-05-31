@@ -14,4 +14,4 @@ gem "rubocop", "~> 1.21"
 gem "rubocop-rails-omakase", require: false
 
 gem "rqrcode"
-gem "pdf417"
+gem "pdf-417"

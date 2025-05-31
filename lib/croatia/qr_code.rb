@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Croatia::Invoice::QRCode
+class Croatia::QRCode
   def self.ensure_supported!
     return if supported?
 

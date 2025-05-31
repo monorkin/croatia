@@ -26,14 +26,14 @@ module Croatia::Invoice::Fiscalizable
         izn: total_cents.to_s
       }
 
-      if data[:izn].length > 10
-        raise ArgumentError, "Total amount exceeds 10 digits: #{data[:izn]}"
+      if params[:izn].length > 10
+        raise ArgumentError, "Total amount exceeds 10 digits: #{params[:izn]}"
       end
 
       if unique_invoice_identifier
-        data[:jir] = unique_invoice_identifier
+        params[:jir] = unique_invoice_identifier
       elsif issuer_protection_code
-        data[:zki] = issuer_protection_code
+        params[:zki] = issuer_protection_code
       else
         raise ArgumentError, "Either unique_invoice_identifier or issuer_protection_code must be provided"
       end
