@@ -18,10 +18,8 @@ module Croatia::Invoice::Fiscalizable
       Croatia::Invoice::Fiscalizer.new(**options, invoice: self).reverse
     end
 
-    def qr_code
-      unless defined?(RQRCode)
-        raise LoadError, "RQRCode is not available. Please add it to your Gemfile or require it."
-      end
+    def fiscalization_qr_code
+      Croatia::QRCode.ensure_supported!
 
       params = {
         datv: issue_date.strftime("%Y%m%d_%H%M"),
@@ -34,14 +32,16 @@ module Croatia::Invoice::Fiscalizable
 
       if unique_invoice_identifier
         data[:jir] = unique_invoice_identifier
-      else
+      elsif issuer_protection_code
         data[:zki] = issuer_protection_code
+      else
+        raise ArgumentError, "Either unique_invoice_identifier or issuer_protection_code must be provided"
       end
 
       query_string = URI.encode_www_form(params)
       url = "#{QR_CODE_BASE_URL}?#{query_string}"
 
-      RQRCode::QRCode.new(url)
+      Croatia::QRCode.new(url)
     end
   end
 end
