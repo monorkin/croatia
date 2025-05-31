@@ -17,4 +17,7 @@ class Croatia::Invoice::Fiscalizer
     # TODO: Implement the reverse logic here
     puts "TODO: Storno invoice #{invoice} with options: #{options}"
   end
+
+  def invoice_xml
+  end
 end

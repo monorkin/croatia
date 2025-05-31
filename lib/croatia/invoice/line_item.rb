@@ -4,16 +4,27 @@ require "bigdecimal"
 require "bigdecimal/util"
 
 class Croatia::Invoice::LineItem
-  attr_accessor :description
-  attr_reader :quantity, :unit, :unit_price, :tax_rate, :tax_category, :discount_rate
+  include Croatia::Enum
+
+  attr_accessor :description, :unit
+  attr_reader :quantity, :unit_price, :tax_rate, :discount_rate
+
+  enum :tax_category, {
+    standard: "S",
+    lower_rate: "AA",
+    exempt: "E",
+    zero_rated: "Z",
+    outside_scope: "O",
+    reverse_charge: "K"
+  }, allow_nil: true
 
   def initialize(**options)
     self.description = options[:description]
     self.quantity = options.fetch(:quantity, 1)
-    # self.unit = options[:unit]
+    self.unit = options[:unit]
     self.unit_price = options.fetch(:unit_price, 0.0)
     self.tax_rate = options.fetch(:tax_rate, 0.25)
-    # self.tax_category = options[:tax_category]
+    self.tax_category = options[:tax_category]
   end
 
   def quantity=(value)
