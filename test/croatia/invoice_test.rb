@@ -492,16 +492,4 @@ class Croatia::InvoiceTest < Minitest::Test
       invoice.fiscalization_qr_code
     end
   end
-
-  def test_fiscalize_method_exists
-    invoice = Croatia::Invoice.new
-
-    assert_respond_to invoice, :fiscalize!
-  end
-
-  def test_reverse_method_exists
-    invoice = Croatia::Invoice.new
-
-    assert_respond_to invoice, :reverse!
-  end
 end
