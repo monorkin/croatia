@@ -17,10 +17,10 @@ class Croatia::Invoice
   include Payable
 
   attr_reader :issue_date, :due_date
+  attr_writer :issuer, :seller, :buyer
   attr_accessor \
     :business_location_identifier, # oznaka poslovnog prostora
     :currency,
-    :issuer_protection_code, # zki
     :line_items,
     :register_identifier, # oznaka naplatnog uredaja
     :sequential_number, # redni broj racuna
@@ -75,6 +75,14 @@ class Croatia::Invoice
     line_item
   end
 
+  def issuer(&block)
+    if block_given?
+      self.issuer = Party.new.tap(&block)
+    else
+      @issuer
+    end
+  end
+
   def buyer(&block)
     if block_given?
       self.buyer = Party.new.tap(&block)
@@ -83,28 +91,12 @@ class Croatia::Invoice
     end
   end
 
-  def buyer=(value)
-    unless value.is_a?(Party)
-      raise ArgumentError, "Buyer must be an instance of Party"
-    end
-
-    @buyer = value
-  end
-
   def seller(&block)
     if block_given?
       self.seller = Party.new.tap(&block)
     else
       @seller
     end
-  end
-
-  def seller=(value)
-    unless value.is_a?(Party)
-      raise ArgumentError, "Seller must be an instance of Party"
-    end
-
-    @seller = value
   end
 
   def issue_date=(value)

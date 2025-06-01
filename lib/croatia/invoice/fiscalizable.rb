@@ -18,22 +18,32 @@ module Croatia::Invoice::Fiscalizable
       Croatia::Invoice::Fiscalizer.new(**options, invoice: self).reverse
     end
 
-    def fiscalization_qr_code
+    def issuer_protection_code(**options)
+      Croatia::Invoice::Fiscalizer
+        .new(**options, invoice: self)
+        .issuer_protection_code
+    end
+
+    def fiscalization_qr_code(**options)
       Croatia::QRCode.ensure_supported!
 
+
       params = {
-        datv: issue_date.strftime("%Y%m%d_%H%M"),
-        izn: total_cents.to_s
+        datv: options.fetch(:issue_date) { issue_date }.strftime("%Y%m%d_%H%M"),
+        izn: options.fetch(:total_cents) { total_cents }.to_i.to_s
       }
 
       if params[:izn].length > 10
         raise ArgumentError, "Total amount exceeds 10 digits: #{params[:izn]}"
       end
 
-      if unique_invoice_identifier
-        params[:jir] = unique_invoice_identifier
-      elsif issuer_protection_code
-        params[:zki] = issuer_protection_code
+      uii = options.fetch(:unique_invoice_identifier) { unique_invoice_identifier }
+      ipc = options.fetch(:issuer_protection_code) { issuer_protection_code }
+
+      if uii
+        params[:jir] = uii
+      elsif ipc
+        params[:zki] = ipc
       else
         raise ArgumentError, "Either unique_invoice_identifier or issuer_protection_code must be provided"
       end

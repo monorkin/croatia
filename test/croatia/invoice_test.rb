@@ -3,6 +3,8 @@
 require "test_helper"
 
 class Croatia::InvoiceTest < Minitest::Test
+  include CertificateHelper
+
   def test_initialize_with_defaults
     invoice = Croatia::Invoice.new
 
@@ -141,13 +143,6 @@ class Croatia::InvoiceTest < Minitest::Test
     assert_equal party, invoice.buyer
   end
 
-  def test_buyer_validation
-    invoice = Croatia::Invoice.new
-
-    assert_raises(ArgumentError, "Buyer must be an instance of Party") do
-      invoice.buyer = "not a party"
-    end
-  end
 
   def test_seller_with_block
     invoice = Croatia::Invoice.new
@@ -169,13 +164,6 @@ class Croatia::InvoiceTest < Minitest::Test
     assert_equal party, invoice.seller
   end
 
-  def test_seller_validation
-    invoice = Croatia::Invoice.new
-
-    assert_raises(ArgumentError, "Seller must be an instance of Party") do
-      invoice.seller = "not a party"
-    end
-  end
 
   def test_issue_date_with_date
     invoice = Croatia::Invoice.new
@@ -457,8 +445,10 @@ class Croatia::InvoiceTest < Minitest::Test
       item.tax_rate = 0.25
     end
 
-
-    qr_code = invoice.fiscalization_qr_code
+    qr_code = invoice.fiscalization_qr_code(
+      unique_invoice_identifier: "12345678-1234-1234-1234-123456789012",
+      issuer_protection_code: nil  # Explicitly avoid calling the method
+    )
 
     assert_instance_of Croatia::QRCode, qr_code
 
@@ -466,9 +456,35 @@ class Croatia::InvoiceTest < Minitest::Test
     assert_equal expected_url, qr_code.data
   end
 
-  def test_fiscalization_qr_code_with_protection_code
+  def test_fiscalization_qr_code_with_options
     invoice = Croatia::Invoice.new(
-      issuer_protection_code: "abcd1234efgh5678",
+      unique_invoice_identifier: "12345678-1234-1234-1234-123456789012",
+      issue_date: DateTime.new(2024, 1, 15, 14, 30, 0)
+    )
+
+    invoice.add_line_item do |item|
+      item.description = "Test item"
+      item.unit_price = 123.45
+      item.tax_rate = 0.25
+    end
+
+    # Test with custom options that override invoice values
+    # We provide unique_invoice_identifier to avoid calling issuer_protection_code
+    qr_code = invoice.fiscalization_qr_code(
+      issue_date: DateTime.new(2024, 2, 20, 10, 45, 0),
+      total_cents: 99999,
+      unique_invoice_identifier: "different-uuid",
+      issuer_protection_code: nil  # Explicitly avoid calling the method
+    )
+
+    expected_url = "https://porezna.gov.hr/rn?datv=20240220_1045&izn=99999&jir=different-uuid"
+    assert_equal expected_url, qr_code.data
+  end
+
+  def test_fiscalization_qr_code_with_issuer_protection_code
+    cert_data = generate_test_certificate
+
+    invoice = Croatia::Invoice.new(
       issue_date: DateTime.new(2024, 1, 15, 14, 30, 0)
     )
 
@@ -478,10 +494,12 @@ class Croatia::InvoiceTest < Minitest::Test
       item.tax_rate = 0.25
     end
 
+    # Test with issuer_protection_code option
+    qr_code = invoice.fiscalization_qr_code(
+      issuer_protection_code: "test_protection_code_123"
+    )
 
-    qr_code = invoice.fiscalization_qr_code
-
-    expected_url = "https://porezna.gov.hr/rn?datv=20240115_1430&izn=12500&zki=abcd1234efgh5678"
+    expected_url = "https://porezna.gov.hr/rn?datv=20240115_1430&izn=12500&zki=test_protection_code_123"
     assert_equal expected_url, qr_code.data
   end
 
@@ -491,5 +509,53 @@ class Croatia::InvoiceTest < Minitest::Test
     assert_raises(ArgumentError, "Either unique_invoice_identifier or issuer_protection_code must be provided") do
       invoice.fiscalization_qr_code
     end
+  end
+
+  def test_fiscalization_qr_code_amount_validation
+    invoice = Croatia::Invoice.new(
+      unique_invoice_identifier: "12345678-1234-1234-1234-123456789012",
+      issue_date: DateTime.new(2024, 1, 15, 14, 30, 0)
+    )
+
+    assert_raises(ArgumentError, "Total amount exceeds 10 digits") do
+      invoice.fiscalization_qr_code(total_cents: 12345678901) # 11 digits
+    end
+  end
+
+  def test_issuer_protection_code_method
+    cert_data = generate_test_certificate
+
+    invoice = Croatia::Invoice.new(
+      issue_date: DateTime.new(2024, 1, 15, 14, 30, 0),
+      business_location_identifier: "LOC001",
+      register_identifier: "REG001",
+      sequential_number: 123
+    )
+
+    # Create issuer with PIN
+    invoice.issuer do |party|
+      party.name = "Test Issuer"
+      party.pin = "12345678901"
+    end
+
+    invoice.add_line_item do |item|
+      item.description = "Test item"
+      item.unit_price = 100.0
+      item.tax_rate = 0.25
+    end
+
+    # Test that the method exists and can be called with certificate options
+    assert_respond_to invoice, :issuer_protection_code
+
+    # The actual implementation would depend on the Fiscalizer class
+    # The Fiscalizer requires a certificate parameter
+    protection_code = invoice.issuer_protection_code(
+      certificate: cert_data[:p12],
+      password: cert_data[:password]
+    )
+
+    # The protection code would be a string (implementation dependent)
+    assert_kind_of String, protection_code
+    assert_match /^[a-f0-9]{32}$/, protection_code
   end
 end
