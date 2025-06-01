@@ -556,6 +556,6 @@ class Croatia::InvoiceTest < Minitest::Test
 
     # The protection code would be a string (implementation dependent)
     assert_kind_of String, protection_code
-    assert_match /^[a-f0-9]{32}$/, protection_code
+    assert_match(/^[a-f0-9]{32}$/, protection_code)
   end
 end
