@@ -30,6 +30,26 @@ gem "croatia"
 
 This gem doesn't load anything by default, so you need to require the specific module you want to use.
 
+### Configuration
+
+```ruby
+Croatia.configure do |config|
+  # Default tax rates
+  config.tax_rates = {
+    value_added_tax: {
+      standard: 0.25,
+      lower_rate: 0.13,
+      exempt: 0.0,
+      zero_rated: 0.0,
+      outside_scope: 0.0,
+      reverse_charge: 0.0
+    },
+    consumption_tax: Hash.new(0.0),
+    other: Hash.new(0.0)
+  }
+end
+```
+
 ### PINs / OIBs
 
 ```ruby
@@ -37,6 +57,45 @@ require "croatia/pin"
 
 Croatia::Pin.valid?("12345678903") # => true
 Croatia::Pin.valid?("12345678900") # => false
+```
+
+### Invoices
+
+```ruby
+invoice = Croatia::Invoice.new(
+  sequential_number: 64,
+  register_identifier: "001",
+  business_location_identifier: "HQ1"
+)
+
+# You can also do `invoice.issuer = Croatia::Invoice::Party.new(pin: "12345678903")`
+invoice.issuer do |issuer|
+  issuer.pin = "12345678903"
+end
+
+invoice.add_line_item do |line_item|
+  line_item.description = "Product 1"
+  line_item.quantity = 2
+  line_item.unit_price = 100.0
+
+  line_item.add_tax(type: :value_added_tax, category: :standard)
+
+  line_item.add_tax do |tax|
+    tax.type = :other
+    tax.category = :lower_rate
+    tax.rate = 0.05
+  end
+end
+```
+
+#### Fiscalization
+
+```ruby
+invoice.issuer_protection_code # => "abcd1234efgh5678ijkl9012mnop3456"
+
+invoice.fiscalize!
+
+invoice.reverse!
 ```
 
 ## Development
