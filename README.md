@@ -54,7 +54,7 @@ Croatia.configure do |config|
     certificate: "path/to/your/certificate.p12", # or File.read("path/to/your/certificate.p12")
     password: ENV["FISCALIZATION_CERTIFICATE_PASSWORD"]
   }
-  # You can also use a plain private key (.pem) file instead of a full certificate (.p12)
+  # You can also use a plain private key (.key) file instead of a full certificate (.p12)
   # if you don't have a .p12 or don't want to store/manage a password.
   # config.fiscalization = {
   #   certificate: "path/to/your/private_key.key", # or ENV["FISCALIZATION_PRIVATE_KEY"],
