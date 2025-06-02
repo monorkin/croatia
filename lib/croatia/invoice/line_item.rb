@@ -6,25 +6,15 @@ require "bigdecimal/util"
 class Croatia::Invoice::LineItem
   include Croatia::Enum
 
-  attr_accessor :description, :unit
-  attr_reader :quantity, :unit_price, :tax_rate, :discount_rate
-
-  enum :tax_category, {
-    standard: "S",
-    lower_rate: "AA",
-    exempt: "E",
-    zero_rated: "Z",
-    outside_scope: "O",
-    reverse_charge: "K"
-  }, allow_nil: true
+  attr_accessor :description, :unit, :taxes
+  attr_reader :quantity, :unit_price, :discount_rate
 
   def initialize(**options)
     self.description = options[:description]
     self.quantity = options.fetch(:quantity, 1)
     self.unit = options[:unit]
     self.unit_price = options.fetch(:unit_price, 0.0)
-    self.tax_rate = options.fetch(:tax_rate, 0.25)
-    self.tax_category = options[:tax_category]
+    self.taxes = options.fetch(:taxes, [])
   end
 
   def quantity=(value)
@@ -43,13 +33,6 @@ class Croatia::Invoice::LineItem
     @unit_price = value.to_d
   end
 
-  def tax_rate=(value)
-    unless value.is_a?(Numeric) && value >= 0 && value <= 1
-      raise ArgumentError, "Tax rate must be a non-negative number between 0 and 1"
-    end
-
-    @tax_rate = value.to_d
-  end
 
   def discount_rate=(value)
     if value.nil?
@@ -100,10 +83,25 @@ class Croatia::Invoice::LineItem
   end
 
   def tax
-    (subtotal * tax_rate).round(2, BigDecimal::ROUND_HALF_UP)
+    taxes.sum { |tax_obj| (subtotal * tax_obj.rate).round(2, BigDecimal::ROUND_HALF_UP) }
   end
 
   def total
     (subtotal + tax).round(2, BigDecimal::ROUND_HALF_UP)
+  end
+
+  def add_tax(tax_obj = nil, **options, &block)
+    if tax_obj.nil?
+      tax_obj = Croatia::Invoice::Tax.new(**options)
+    end
+
+    tax_obj.tap(&block) if block_given?
+
+    unless tax_obj.is_a?(Croatia::Invoice::Tax)
+      raise ArgumentError, "Tax must be an instance of Croatia::Invoice::Tax"
+    end
+
+    taxes << tax_obj
+    tax_obj
   end
 end

@@ -9,21 +9,24 @@ class Croatia::Invoice::LineItemTest < Minitest::Test
     assert_equal "Test item", line_item.description
     assert_equal 1, line_item.quantity
     assert_equal 0.0, line_item.unit_price
-    assert_equal 0.25, line_item.tax_rate
+    assert_equal [], line_item.taxes
   end
 
   def test_initialize_with_custom_values
+    tax = Croatia::Invoice::Tax.new(rate: 0.20, category: :lower_rate)
     line_item = Croatia::Invoice::LineItem.new(
       description: "Custom item",
       quantity: 3,
       unit_price: 10.50,
-      tax_rate: 0.20
+      taxes: [ tax ]
     )
 
     assert_equal "Custom item", line_item.description
     assert_equal 3, line_item.quantity
     assert_equal 10.50, line_item.unit_price
-    assert_equal 0.20, line_item.tax_rate
+    assert_equal 1, line_item.taxes.length
+    assert_equal BigDecimal("0.20"), line_item.taxes.first.rate
+    assert_equal :lower_rate, line_item.taxes.first.category
   end
 
   def test_quantity_validation
@@ -50,19 +53,47 @@ class Croatia::Invoice::LineItemTest < Minitest::Test
     end
   end
 
-  def test_tax_rate_validation
+  def test_add_tax_with_options
     line_item = Croatia::Invoice::LineItem.new(description: "Test")
 
-    assert_raises(ArgumentError, "Tax rate must be a non-negative number between 0 and 1") do
-      line_item.tax_rate = -0.1
+    tax = line_item.add_tax(rate: 0.13, category: :lower_rate)
+
+    assert_instance_of Croatia::Invoice::Tax, tax
+    assert_equal BigDecimal("0.13"), tax.rate
+    assert_equal :lower_rate, tax.category
+    assert_equal 1, line_item.taxes.length
+  end
+
+  def test_add_tax_with_block
+    line_item = Croatia::Invoice::LineItem.new(description: "Test")
+
+    tax = line_item.add_tax do |t|
+      t.rate = 0.05
+      t.category = :exempt
     end
 
-    assert_raises(ArgumentError, "Tax rate must be a non-negative number between 0 and 1") do
-      line_item.tax_rate = 1.5
-    end
+    assert_instance_of Croatia::Invoice::Tax, tax
+    assert_equal BigDecimal("0.05"), tax.rate
+    assert_equal :exempt, tax.category
+    assert_equal 1, line_item.taxes.length
+  end
 
-    assert_raises(ArgumentError, "Tax rate must be a non-negative number between 0 and 1") do
-      line_item.tax_rate = "invalid"
+  def test_add_tax_with_object
+    line_item = Croatia::Invoice::LineItem.new(description: "Test")
+    tax_obj = Croatia::Invoice::Tax.new(rate: 0.22, category: :standard)
+
+    result = line_item.add_tax(tax_obj)
+
+    assert_equal tax_obj, result
+    assert_equal 1, line_item.taxes.length
+    assert_equal tax_obj, line_item.taxes.first
+  end
+
+  def test_add_tax_validation
+    line_item = Croatia::Invoice::LineItem.new(description: "Test")
+
+    assert_raises(ArgumentError, "Tax must be an instance of Croatia::Invoice::Tax") do
+      line_item.add_tax("not a tax")
     end
   end
 
@@ -73,29 +104,51 @@ class Croatia::Invoice::LineItemTest < Minitest::Test
       unit_price: 10.0
     )
 
-    assert_equal 30.0, line_item.subtotal
+    assert_equal BigDecimal("30.0"), line_item.subtotal
   end
 
-  def test_tax_calculation
+  def test_tax_calculation_single_tax
     line_item = Croatia::Invoice::LineItem.new(
       description: "Test item",
       quantity: 2,
-      unit_price: 10.0,
-      tax_rate: 0.25
+      unit_price: 10.0
+    )
+    line_item.add_tax(rate: 0.25)
+
+    assert_equal BigDecimal("5.0"), line_item.tax
+  end
+
+  def test_tax_calculation_multiple_taxes
+    line_item = Croatia::Invoice::LineItem.new(
+      description: "Test item",
+      quantity: 2,
+      unit_price: 10.0
+    )
+    line_item.add_tax(rate: 0.20)  # 4.0
+    line_item.add_tax(rate: 0.05)  # 1.0
+
+    assert_equal BigDecimal("5.0"), line_item.tax
+  end
+
+  def test_tax_calculation_no_taxes
+    line_item = Croatia::Invoice::LineItem.new(
+      description: "Test item",
+      quantity: 2,
+      unit_price: 10.0
     )
 
-    assert_equal 5.0, line_item.tax
+    assert_equal BigDecimal("0"), line_item.tax
   end
 
   def test_total_calculation
     line_item = Croatia::Invoice::LineItem.new(
       description: "Test item",
       quantity: 2,
-      unit_price: 10.0,
-      tax_rate: 0.25
+      unit_price: 10.0
     )
+    line_item.add_tax(rate: 0.25)
 
-    assert_equal 25.0, line_item.total
+    assert_equal BigDecimal("25.0"), line_item.total
   end
 
   def test_bigdecimal_precision
@@ -107,7 +160,6 @@ class Croatia::Invoice::LineItemTest < Minitest::Test
 
     assert_instance_of BigDecimal, line_item.quantity
     assert_instance_of BigDecimal, line_item.unit_price
-    assert_instance_of BigDecimal, line_item.tax_rate
   end
 
   def test_description_setter
@@ -121,13 +173,12 @@ class Croatia::Invoice::LineItemTest < Minitest::Test
     line_item = Croatia::Invoice::LineItem.new(
       description: "Free item",
       quantity: 0,
-      unit_price: 0.0,
-      tax_rate: 0.0
+      unit_price: 0.0
     )
 
-    assert_equal 0, line_item.subtotal
-    assert_equal 0, line_item.tax
-    assert_equal 0, line_item.total
+    assert_equal BigDecimal("0"), line_item.subtotal
+    assert_equal BigDecimal("0"), line_item.tax
+    assert_equal BigDecimal("0"), line_item.total
   end
 
   # Test various scenarios that would cause floating point precision errors
@@ -145,9 +196,9 @@ class Croatia::Invoice::LineItemTest < Minitest::Test
     item2 = Croatia::Invoice::LineItem.new(
       description: "Repeating decimals",
       quantity: 1.0 / 3.0,
-      unit_price: 3.0,
-      tax_rate: 1.0 / 3.0
+      unit_price: 3.0
     )
+    item2.add_tax(rate: 1.0 / 3.0)
     # 1/3 * 3.0 should be exactly 1.0, rounded to 2 decimals
     assert_equal BigDecimal("1.00"), item2.subtotal
     # tax_rate is rounded to 0.33, so tax = 1.00 * 0.33 = 0.33
@@ -158,9 +209,9 @@ class Croatia::Invoice::LineItemTest < Minitest::Test
     item3 = Croatia::Invoice::LineItem.new(
       description: "Complex calculation",
       quantity: 3.33,
-      unit_price: 1.11,
-      tax_rate: 0.22
+      unit_price: 1.11
     )
+    item3.add_tax(rate: 0.22)
     # 3.33 * 1.11 = 3.6963, rounded to 3.70
     assert_equal BigDecimal("3.70"), item3.subtotal
     # 3.70 * 0.22 = 0.814, rounded to 0.81
@@ -172,9 +223,9 @@ class Croatia::Invoice::LineItemTest < Minitest::Test
     item4 = Croatia::Invoice::LineItem.new(
       description: "Half-up rounding test",
       quantity: 1,
-      unit_price: 1.125,
-      tax_rate: 0.25
+      unit_price: 1.125
     )
+    item4.add_tax(rate: 0.25)
     assert_equal BigDecimal("1.125"), item4.unit_price
     assert_equal BigDecimal("1.13"), item4.subtotal
     assert_equal BigDecimal("0.28"), item4.tax  # 1.13 * 0.25 = 0.2825, rounds to 0.28
@@ -195,9 +246,9 @@ class Croatia::Invoice::LineItemTest < Minitest::Test
     line_item = Croatia::Invoice::LineItem.new(
       description: "Test item",
       quantity: 2,
-      unit_price: 10.0,
-      tax_rate: 0.25
+      unit_price: 10.0
     )
+    line_item.add_tax(rate: 0.25)
 
     # Test setting discount rate
     line_item.discount_rate = 0.1
@@ -236,9 +287,9 @@ class Croatia::Invoice::LineItemTest < Minitest::Test
     line_item = Croatia::Invoice::LineItem.new(
       description: "Test item",
       quantity: 2,
-      unit_price: 10.0,
-      tax_rate: 0.25
+      unit_price: 10.0
     )
+    line_item.add_tax(rate: 0.25)
 
     # Test setting fixed discount amount
     line_item.discount = 3.0
@@ -287,9 +338,9 @@ class Croatia::Invoice::LineItemTest < Minitest::Test
     line_item = Croatia::Invoice::LineItem.new(
       description: "Test item",
       quantity: 5,
-      unit_price: 10.0,
-      tax_rate: 0.25
+      unit_price: 10.0
     )
+    line_item.add_tax(rate: 0.25)
 
     original_quantity = line_item.quantity
     line_item.reverse
@@ -321,13 +372,12 @@ class Croatia::Invoice::LineItemTest < Minitest::Test
   end
 
   def test_floating_point_with_discounts
-    # Test floating point precision with discount calculations
     line_item = Croatia::Invoice::LineItem.new(
       description: "Precision test with discount",
       quantity: 3.33,
-      unit_price: 1.11,
-      tax_rate: 0.22
+      unit_price: 1.11
     )
+    line_item.add_tax(rate: 0.22)
 
     line_item.discount_rate = 0.15
 

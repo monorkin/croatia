@@ -55,19 +55,19 @@ class Croatia::InvoiceTest < Minitest::Test
   def test_calculations_with_line_items
     invoice = Croatia::Invoice.new
 
-    invoice.add_line_item(Croatia::Invoice::LineItem.new(
-      description: "Item 1",
-      quantity: 2,
-      unit_price: 10.0,
-      tax_rate: 0.25
-    ))
+    invoice.add_line_item do |item|
+      item.description = "Item 1"
+      item.quantity = 2
+      item.unit_price = 10.0
+      item.add_tax(rate: 0.25)
+    end
 
-    invoice.add_line_item(Croatia::Invoice::LineItem.new(
-      description: "Item 2",
-      quantity: 1,
-      unit_price: 30.0,
-      tax_rate: 0.25
-    ))
+    invoice.add_line_item do |item|
+      item.description = "Item 2"
+      item.quantity = 1
+      item.unit_price = 30.0
+      item.add_tax(rate: 0.25)
+    end
 
     # Item 1: gross=20.00, discount=0, subtotal=20.00, tax=5.00, total=25.00
     # Item 2: gross=30.00, discount=0, subtotal=30.00, tax=7.50, total=37.50
@@ -79,11 +79,11 @@ class Croatia::InvoiceTest < Minitest::Test
   def test_total_cents
     invoice = Croatia::Invoice.new
 
-    invoice.add_line_item(Croatia::Invoice::LineItem.new(
-      description: "Item",
-      unit_price: 10.55,
-      tax_rate: 0.25
-    ))
+    invoice.add_line_item do |item|
+      item.description = "Item"
+      item.unit_price = 10.55
+      item.add_tax(rate: 0.25)
+    end
 
     # total = 10.55 + (10.55 * 0.25) = 10.55 + 2.64 = 13.19
     assert_equal BigDecimal("13.19"), invoice.total
@@ -239,7 +239,7 @@ class Croatia::InvoiceTest < Minitest::Test
       item.description = "Discounted item"
       item.quantity = 2
       item.unit_price = 10.0
-      item.tax_rate = 0.25
+      item.add_tax(rate: 0.25)
       item.discount_rate = 0.1  # 10% discount
     end
 
@@ -261,14 +261,14 @@ class Croatia::InvoiceTest < Minitest::Test
       item.description = "Original item"
       item.quantity = 3
       item.unit_price = 10.0
-      item.tax_rate = 0.25
+      item.add_tax(rate: 0.25)
     end
 
     invoice.add_line_item do |item|
       item.description = "Reversal item"
       item.quantity = -1
       item.unit_price = 10.0
-      item.tax_rate = 0.25
+      item.add_tax(rate: 0.25)
     end
 
     # Item 1: subtotal=30.00, tax=7.50, total=37.50
@@ -293,14 +293,14 @@ class Croatia::InvoiceTest < Minitest::Test
       item.description = "Standard item"
       item.quantity = 2
       item.unit_price = 25.50
-      item.tax_rate = 0.25
+      item.add_tax(rate: 0.25)
     end
 
     invoice.add_line_item do |item|
       item.description = "Discounted item"
       item.quantity = 1
       item.unit_price = 100.0
-      item.tax_rate = 0.13
+      item.add_tax(rate: 0.13)
       item.discount = 15.0
     end
 
@@ -331,7 +331,7 @@ class Croatia::InvoiceTest < Minitest::Test
     invoice.add_line_item do |item|
       item.description = "Test item"
       item.unit_price = 100.0
-      item.tax_rate = 0.25
+      item.add_tax(rate: 0.25)
     end
 
 
@@ -370,7 +370,7 @@ class Croatia::InvoiceTest < Minitest::Test
     invoice.add_line_item do |item|
       item.description = "Test item"
       item.unit_price = 50.0
-      item.tax_rate = 0.25
+      item.add_tax(rate: 0.25)
     end
 
 
@@ -442,7 +442,7 @@ class Croatia::InvoiceTest < Minitest::Test
     invoice.add_line_item do |item|
       item.description = "Test item"
       item.unit_price = 123.45
-      item.tax_rate = 0.25
+      item.add_tax(rate: 0.25)
     end
 
     qr_code = invoice.fiscalization_qr_code
@@ -462,7 +462,7 @@ class Croatia::InvoiceTest < Minitest::Test
     invoice.add_line_item do |item|
       item.description = "Test item"
       item.unit_price = 123.45
-      item.tax_rate = 0.25
+      item.add_tax(rate: 0.25)
     end
 
     # Test with custom options that override invoice values
@@ -486,7 +486,7 @@ class Croatia::InvoiceTest < Minitest::Test
     invoice.add_line_item do |item|
       item.description = "Test item"
       item.unit_price = 100.0
-      item.tax_rate = 0.25
+      item.add_tax(rate: 0.25)
     end
 
     # Test with issuer_protection_code option
@@ -536,7 +536,7 @@ class Croatia::InvoiceTest < Minitest::Test
     invoice.add_line_item do |item|
       item.description = "Test item"
       item.unit_price = 100.0
-      item.tax_rate = 0.25
+      item.add_tax(rate: 0.25)
     end
 
     # Test that the method exists and can be called with certificate options
@@ -580,14 +580,14 @@ class Croatia::InvoiceTest < Minitest::Test
       item.description = "Test item 1"
       item.quantity = 2
       item.unit_price = 50.0
-      item.tax_rate = 0.25
+      item.add_tax(rate: 0.25)
     end
 
     invoice.add_line_item do |item|
       item.description = "Test item 2"
       item.quantity = 1
       item.unit_price = 30.0
-      item.tax_rate = 0.25
+      item.add_tax(rate: 0.25)
     end
 
     # Verify original quantities
@@ -633,7 +633,7 @@ class Croatia::InvoiceTest < Minitest::Test
     invoice.add_line_item do |item|
       item.description = "Test item"
       item.unit_price = 100.0
-      item.tax_rate = 0.25
+      item.add_tax(rate: 0.25)
     end
 
     # Test that the method exists and can be called with certificate options

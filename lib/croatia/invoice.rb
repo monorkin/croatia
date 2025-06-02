@@ -8,6 +8,7 @@ class Croatia::Invoice
   autoload :EInvoicable, "croatia/invoice/e_invoicable"
   autoload :Payable, "croatia/invoice/payable"
   autoload :Party, "croatia/invoice/party"
+  autoload :Tax, "croatia/invoice/tax"
   autoload :LineItem, "croatia/invoice/line_item"
   autoload :Fiscalizer, "croatia/invoice/fiscalizer"
 
