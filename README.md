@@ -1,9 +1,16 @@
 # Croatia
 
 Croatia is a gem that contains various utilities for performing Croatia-specific actions:
-- [x] Validating PINs (aka. OIBs)
-- [ ] Fiscalization
-- [ ] E-Invoice
+- [x] PIN (OIB)
+  - [x] Validation
+- [ ] Invoices
+  - [ ] Fiscalization
+    - [x] Issuer protection code generation (ZKI)
+    - [x] QR code generation
+    - [x] Reverse (storno)
+    - [ ] Invoice registration
+    - [ ] Payment method change
+  - [ ] E-Invoice
 
 ## Installation
 
