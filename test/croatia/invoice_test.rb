@@ -445,10 +445,7 @@ class Croatia::InvoiceTest < Minitest::Test
       item.tax_rate = 0.25
     end
 
-    qr_code = invoice.fiscalization_qr_code(
-      unique_invoice_identifier: "12345678-1234-1234-1234-123456789012",
-      issuer_protection_code: nil  # Explicitly avoid calling the method
-    )
+    qr_code = invoice.fiscalization_qr_code
 
     assert_instance_of Croatia::QRCode, qr_code
 
@@ -469,12 +466,10 @@ class Croatia::InvoiceTest < Minitest::Test
     end
 
     # Test with custom options that override invoice values
-    # We provide unique_invoice_identifier to avoid calling issuer_protection_code
     qr_code = invoice.fiscalization_qr_code(
       issue_date: DateTime.new(2024, 2, 20, 10, 45, 0),
       total_cents: 99999,
-      unique_invoice_identifier: "different-uuid",
-      issuer_protection_code: nil  # Explicitly avoid calling the method
+      unique_invoice_identifier: "different-uuid"
     )
 
     expected_url = "https://porezna.gov.hr/rn?datv=20240220_1045&izn=99999&jir=different-uuid"
@@ -547,7 +542,6 @@ class Croatia::InvoiceTest < Minitest::Test
     # Test that the method exists and can be called with certificate options
     assert_respond_to invoice, :issuer_protection_code
 
-    # The actual implementation would depend on the Fiscalizer class
     # The Fiscalizer requires a certificate parameter
     protection_code = invoice.issuer_protection_code(
       certificate: cert_data[:p12],
@@ -557,5 +551,102 @@ class Croatia::InvoiceTest < Minitest::Test
     # The protection code would be a string (implementation dependent)
     assert_kind_of String, protection_code
     assert_match(/^[a-f0-9]{32}$/, protection_code)
+  end
+
+  def test_reverse_method
+    cert_data = generate_test_certificate
+
+    invoice = Croatia::Invoice.new(
+      issue_date: DateTime.new(2024, 1, 15, 14, 30, 0),
+      business_location_identifier: "LOC001",
+      register_identifier: "REG001",
+      sequential_number: 123
+    )
+
+    # Create issuer with PIN
+    invoice.issuer do |party|
+      party.name = "Test Issuer"
+      party.pin = "12345678901"
+    end
+
+    # Create seller (required for XMLBuilder)
+    invoice.seller do |party|
+      party.name = "Test Seller"
+      party.pin = "98765432109"
+    end
+
+    # Add line items
+    invoice.add_line_item do |item|
+      item.description = "Test item 1"
+      item.quantity = 2
+      item.unit_price = 50.0
+      item.tax_rate = 0.25
+    end
+
+    invoice.add_line_item do |item|
+      item.description = "Test item 2"
+      item.quantity = 1
+      item.unit_price = 30.0
+      item.tax_rate = 0.25
+    end
+
+    # Verify original quantities
+    assert_equal BigDecimal("2"), invoice.line_items[0].quantity
+    assert_equal BigDecimal("1"), invoice.line_items[1].quantity
+
+    # Test that the method exists and can be called with certificate options
+    assert_respond_to invoice, :reverse!
+
+    # Call reverse! - this should reverse all line items and fiscalize
+    invoice.reverse!(
+      certificate: cert_data[:p12],
+      password: cert_data[:password]
+    )
+
+    # Verify quantities are now negative (reversed)
+    assert_equal BigDecimal("-2"), invoice.line_items[0].quantity
+    assert_equal BigDecimal("-1"), invoice.line_items[1].quantity
+  end
+
+  def test_fiscalize_method
+    cert_data = generate_test_certificate
+
+    invoice = Croatia::Invoice.new(
+      issue_date: DateTime.new(2024, 1, 15, 14, 30, 0),
+      business_location_identifier: "LOC001",
+      register_identifier: "REG001",
+      sequential_number: 123
+    )
+
+    # Create issuer with PIN (required for XMLBuilder)
+    invoice.issuer do |party|
+      party.name = "Test Issuer"
+      party.pin = "12345678901"
+    end
+
+    # Create seller (required for XMLBuilder)
+    invoice.seller do |party|
+      party.name = "Test Seller"
+      party.pin = "98765432109"
+    end
+
+    invoice.add_line_item do |item|
+      item.description = "Test item"
+      item.unit_price = 100.0
+      item.tax_rate = 0.25
+    end
+
+    # Test that the method exists and can be called with certificate options
+    assert_respond_to invoice, :fiscalize!
+
+    # Call fiscalize! - this should generate XML and fiscalize the invoice
+    # Note: The current implementation just prints TODO messages
+    invoice.fiscalize!(
+      certificate: cert_data[:p12],
+      password: cert_data[:password]
+    )
+
+    # Since the current implementation is a TODO, we just verify the method runs without error
+    # In a real implementation, this would set fiscalization fields like unique_invoice_identifier
   end
 end

@@ -8,6 +8,7 @@ class Croatia::Invoice::Party
     :einvoice_id,
     :iban,
     :name,
+    :pays_vat,
     :pin,
     :postal_code
 

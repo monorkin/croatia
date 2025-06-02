@@ -7,6 +7,7 @@ require "date"
 require "openssl"
 require "rqrcode"
 require "pdf-417"
+require "tzinfo"
 require "minitest/autorun"
 
 require_relative "./helpers/certificate_helper"

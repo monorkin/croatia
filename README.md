@@ -48,9 +48,14 @@ To release a new version, update the version number in `version.rb`, and then ru
 
 ### Official documentation
 
-Some features of this gem are based on official documentation, which can be found here:
+Some features of this gem are based on official documentation, which can be found here
 
+**Fiscalization:**
 - [Fiscalization - Technical specification v2.3](https://porezna-uprava.gov.hr/UserDocsImages/arhiva/HR_Fiskalizacija/Documents/Fiskalizacija%20-%20Tehnicka%20specifikacija%20za%20korisnike_v2.3.pdf)
+
+**E-Invoice:**
+- [FINA's E-Invoice documentation](https://www.fina.hr/digitalizacija-poslovanja/e-racun/tehnicka-specifikacija/technical-specifications-invoicing-for-web-services)
+- [BIS 3.0 technical specification](https://docs.peppol.eu/poacc/billing/3.0/)
 
 
 ## Contributing

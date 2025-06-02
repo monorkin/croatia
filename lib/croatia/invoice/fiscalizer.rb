@@ -1,44 +1,37 @@
 # frozen_string_literal: true
 
+require "digest/md5"
 require "openssl"
+require "securerandom"
+require "tzinfo"
 
 class Croatia::Invoice::Fiscalizer
-  ATTRIBUTES = %i[invoice certificate password].freeze
+  autoload :XMLBuilder, "croatia/invoice/fiscalizer/xml_builder"
 
-  attr_reader(*ATTRIBUTES)
+  TZ = TZInfo::Timezone.get("Europe/Zagreb")
 
-  def initialize(invoice:, certificate:, **options)
-    @invoice = invoice
+  attr_reader :certificate
 
-    options.each do |key, value|
-      if ATTRIBUTES.include?(key.to_sym)
-        instance_variable_set("@#{key}", value)
-      else
-        raise ArgumentError, "Unknown option: #{key}"
-      end
-    end
-
-    self.certificate = certificate
+  def initialize(certificate:, password: nil)
+    @certificate = load_certificate(certificate, password)
   end
 
-  def fiscalize
+  def fiscalize(invoice)
+    document = XMLBuilder.invoice_request(invoice: invoice, message_id: SecureRandom.uuid, timezone: TZ)
+
     # TODO: Implement the fiscalization logic here
-    puts "TODO: Fiscalize invoice #{invoice} with options: #{options}"
+    puts "TODO: Fiscalize invoice #{invoice}"
+    puts "GENERATED XML:\n#{document}"
   end
 
-  def reverse
-    # TODO: Implement the reverse logic here
-    puts "TODO: Storno invoice #{invoice} with options: #{options}"
-  end
-
-  def issuer_protection_code(**options)
+  def generate_issuer_protection_code(invoice)
     buffer = []
-    buffer << options.fetch(:issuer_pin) { invoice.issuer.pin }
-    buffer << options.fetch(:issue_date) { invoice.issue_date }.strftime("%d.%m.%Y %H:%M:%S")
-    buffer << options.fetch(:sequential_number) { invoice.sequential_number }
-    buffer << options.fetch(:business_location_identifier) { invoice.business_location_identifier }
-    buffer << options.fetch(:register_identifier) { invoice.register_identifier }
-    buffer << options.fetch(:total) { invoice.total }.to_f
+    buffer << invoice.issuer.pin
+    buffer << TZ.to_local(invoice.issue_date).strftime("%d.%m.%Y %H:%M:%S")
+    buffer << invoice.sequential_number
+    buffer << invoice.business_location_identifier
+    buffer << invoice.register_identifier
+    buffer << invoice.total.to_f
 
     digest = OpenSSL::Digest::SHA1.new
     signature = certificate.sign(digest, buffer.join)
@@ -46,21 +39,20 @@ class Croatia::Invoice::Fiscalizer
     Digest::MD5.hexdigest(signature).downcase
   end
 
-  def invoice_xml
-  end
+  private
 
-  protected
-
-    def certificate=(value)
-      @certificate = if value.is_a?(OpenSSL::PKCS12)
-        value.key
-      elsif value.is_a?(OpenSSL::PKey::PKey)
-        value
+    def load_certificate(cert, password)
+      if cert.is_a?(OpenSSL::PKCS12)
+        cert.key
+      elsif cert.is_a?(OpenSSL::PKey::PKey)
+        cert
       else
+        cert = File.read(cert) if File.exist?(cert)
+
         begin
-          OpenSSL::PKey.read(value)
+          OpenSSL::PKey.read(cert)
         rescue OpenSSL::PKey::PKeyError
-          OpenSSL::PKCS12.new(value, password).key
+          OpenSSL::PKCS12.new(cert, password).key
         end
       end
     end
