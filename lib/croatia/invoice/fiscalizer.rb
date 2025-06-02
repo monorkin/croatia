@@ -12,7 +12,10 @@ class Croatia::Invoice::Fiscalizer
 
   attr_reader :certificate
 
-  def initialize(certificate:, password: nil)
+  def initialize(certificate: nil, password: nil)
+    certificate ||= Croatia.config.fiscalization[:certificate]
+    password ||= Croatia.config.fiscalization[:password]
+
     @certificate = load_certificate(certificate, password)
   end
 
@@ -47,7 +50,7 @@ class Croatia::Invoice::Fiscalizer
       elsif cert.is_a?(OpenSSL::PKey::PKey)
         cert
       else
-        cert = File.read(cert) if File.exist?(cert)
+      cert = File.read(cert) if cert.respond_to?(:to_s) && File.exist?(cert.to_s)
 
         begin
           OpenSSL::PKey.read(cert)

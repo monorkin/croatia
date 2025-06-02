@@ -13,7 +13,16 @@ module Croatia
   autoload :Invoice, "croatia/invoice"
 
   class << self
+    def with_config(config = nil, &block)
+      Thread.current[:tmp_croatia_config] = config
+      block.call
+    ensure
+      Thread.current[:tmp_croatia_config] = nil
+    end
+
     def config
+      return Thread.current[:tmp_croatia_config] if Thread.current[:tmp_croatia_config]
+
       @config ||= Croatia::Config.new
     end
 

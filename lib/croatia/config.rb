@@ -13,10 +13,18 @@ class Croatia::Config
     consumption_tax: Hash.new(0.0),
     other: Hash.new(0.0)
   }
+  DEFAULT_FISCALIZATION = {}
 
-  attr_accessor :tax_rates
+  attr_accessor :tax_rates, :fiscalization
 
   def initialize(**options)
-    self.tax_rates = options.delete(:tax_rates) { DEFAULT_TAX_RATES }
+    self.tax_rates = options.delete(:tax_rates) { deep_dup(DEFAULT_TAX_RATES) }
+    self.fiscalization = options.delete(:fiscalization) { deep_dup(DEFAULT_FISCALIZATION) }
   end
+
+  private
+
+    def deep_dup(object)
+      Marshal.load(Marshal.dump(object))
+    end
 end

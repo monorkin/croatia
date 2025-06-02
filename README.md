@@ -1,17 +1,17 @@
 # Croatia
 
 Croatia is a gem that contains various utilities for performing Croatia-specific actions:
-- [x] PIN (OIB)
+- [x] PIN _(OIB)_
   - [x] Validation
 - [ ] Invoices
   - [x] 2D payment barcode generation
   - [ ] Fiscalization
-    - [x] Issuer protection code generation (ZKI)
+    - [x] Issuer protection code generation _(ZKI)_
     - [x] QR code generation
-    - [x] Reverse (storno)
+    - [x] Reverse _(storno)_
     - [ ] Invoice registration
     - [ ] Payment method change
-  - [ ] E-Invoice
+  - [ ] E-Invoice _(e-Racun)_
 
 ## Installation
 
@@ -48,6 +48,17 @@ Croatia.configure do |config|
     consumption_tax: Hash.new(0.0),
     other: Hash.new(0.0)
   }
+
+  # Fiscalization defaults
+  config.fiscalization = {
+    certificate: "path/to/your/certificate.p12", # or File.read("path/to/your/certificate.p12")
+    password: ENV["FISCALIZATION_CERTIFICATE_PASSWORD"]
+  }
+  # You can also use a plain private key (.pem) file instead of a full certificate (.p12)
+  # if you don't have a .p12 or don't want to store/manage a password.
+  # config.fiscalization = {
+  #   certificate: "path/to/your/private_key.key", # or ENV["FISCALIZATION_PRIVATE_KEY"],
+  # }
 end
 ```
 
@@ -74,13 +85,28 @@ invoice.issuer do |issuer|
   issuer.pin = "12345678903"
 end
 
+invoice.seller do |seller|
+  seller.pin = "12345678903"
+  seller.name = "Example Company Ltd."
+  seller.address = "Example Street 1, Zagreb, Croatia"
+  seller.pays_vat = true
+end
+
+invoice.buyer do |buyer|
+  buyer.pin = "12345678903"
+  buyer.name = "Example Client Ltd."
+  buyer.address = "Client Street 2, Split, Croatia"
+end
+
 invoice.add_line_item do |line_item|
   line_item.description = "Product 1"
   line_item.quantity = 2
   line_item.unit_price = 100.0
 
+  # Looks up the tax rate from the config
   line_item.add_tax(type: :value_added_tax, category: :standard)
 
+  # Set a custom tax rate
   line_item.add_tax do |tax|
     tax.type = :other
     tax.category = :lower_rate
@@ -89,14 +115,29 @@ invoice.add_line_item do |line_item|
 end
 ```
 
+#### Payments
+
+```ruby
+barcode = invoice.payment_barcode # => Croatia::PDF417
+barcode.to_svg # => "<svg>...</svg>"
+barcode.to_png # => <ChunkyPNG::Image>
+```
+
 #### Fiscalization
 
 ```ruby
 invoice.issuer_protection_code # => "abcd1234efgh5678ijkl9012mnop3456"
 
+# Fiscalize an invoice using the sertificate from the config
 invoice.fiscalize!
+# Fiscalize an invoice using a custom certificate and password
+invoice.fiscalize!(certificate: "path/to/your/certificate.p12", password: "your_password")
 
 invoice.reverse!
+
+qr_code = invoice.fiscalization_qr_code # => Croatia::QRCode
+qr_code.to_svg # => "<svg>...</svg>"
+qr_code.to_png # => <ChunkyPNG::Image>
 ```
 
 ## Development
