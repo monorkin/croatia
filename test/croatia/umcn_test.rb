@@ -23,8 +23,6 @@ class Croatia::UMCNTest < Minitest::Test
     checksum_2 = mod_2 == 0 || mod_2 == 1 ? 0 : 11 - mod_2
     valid_umcn_2 = base_digits_2 + checksum_2.to_s
 
-    puts "Valid JMBG 1: #{valid_umcn_1}"
-
     assert Croatia::UMCN.valid?(valid_umcn_1), "Should accept valid JMBG: #{valid_umcn_1}"
     assert Croatia::UMCN.valid?(valid_umcn_2), "Should accept valid JMBG: #{valid_umcn_2}"
   end

@@ -5,6 +5,8 @@ Croatia is a gem that contains various utilities for performing Croatia-specific
   - [x] Validation
 - [x] UMCN _(JMBG)_
   - [x] Validation
+- [x] Paymbent barcodes
+  - [x] HUB3 standard 2D barcode generation
 - [ ] Invoices
   - [x] 2D payment barcode generation
   - [ ] Fiscalization
@@ -76,6 +78,39 @@ Croatia::UMCN.valid?("0101990123455") # => true
 Croatia::UMCN.valid?("3201990123456") # => false
 ```
 
+### Payment Barcodes
+
+```ruby
+# IMPORTANT: to be able to generate payment barcodes you have to add
+# the "pdf-417" gem to you Gemfile, or have it installed and required!
+require "pdf-417"
+
+# Generate a 2D barcode which can be scanned by Croatian banking apps
+# and initiate a payment
+barcode = Croatia::PaymentBarcode.new(
+  description: "Dog walking",
+
+  total_cents: 15_00,
+  currency: "EUR",
+  model: "HR00",
+  reference_number: "202506030001",
+  payment_purpose_code: "OTHR",
+
+  buyer_name: "Hrvoje Horvat",
+  buyer_address: "Ilica 141",
+  buyer_postal_code: 10000,
+  buyer_city: "Zagreb",
+
+  seller_name: "Example Company Ltd.",
+  seller_address: "Example Street 1",
+  seller_postal_code: 2100,
+  seller_city: "Split",
+) # => <Croatia::PaymentBarcode ...>
+
+barcode.to_svg # => "<svg>...</svg>"
+barcode.to_png # => "\b..."
+```
+
 ### Invoices
 
 ```ruby
@@ -143,17 +178,14 @@ invoice.number # => "64/HQ1/001"
 ```ruby
 # Generate a 2D barcode which can be scanned by Croatian banking apps
 # and initiate a payment
-barcode = invoice.payment_barcode # => <Croatia::PDF417 ...>
+barcode = invoice.payment_barcode # => <Croatia::PaymentBarcode ...>
 
 # You can also set the description, model and reference number
 barcode = invoice.payment_barcode(
   description: "Dog walking",
   model: "HR00",
   reference_number: "202506030001"
-) # => <Croatia::PDF417 ...>
-
-barcode.to_svg # => "<svg>...</svg>"
-barcode.to_png # => "\b..."
+) # => <Croatia::PaymentBarcode ...>
 ```
 
 #### Fiscalization
