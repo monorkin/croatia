@@ -80,7 +80,7 @@ class Croatia::PaymentBarcodeTest < Minitest::Test
 
     expected_data = [
       "HRVHUB30",
-      "EUR", 
+      "EUR",
       "000000000005000",
       "Jane Smith",
       "",                           # buyer_address (nil becomes empty string)
@@ -137,7 +137,7 @@ class Croatia::PaymentBarcodeTest < Minitest::Test
       seller_name: "Test",
       seller_iban: "HR1234567890123456789"
     )
-    
+
     assert_nothing_raised { barcode.data }
 
     # Test valid account number format
@@ -163,7 +163,7 @@ class Croatia::PaymentBarcodeTest < Minitest::Test
     data = barcode.data
     lines = data.split("\n")
     total_line = lines[2]  # total is the 3rd line
-    
+
     assert_equal "000000000000123", total_line
     assert_equal 15, total_line.length
   end
@@ -206,7 +206,7 @@ class Croatia::PaymentBarcodeTest < Minitest::Test
 
   def test_png_svg_delegation
     barcode = Croatia::PaymentBarcode.new(
-      currency: "EUR", 
+      currency: "EUR",
       total_cents: 1000,
       buyer_name: "Test",
       seller_name: "Test",
@@ -216,7 +216,7 @@ class Croatia::PaymentBarcodeTest < Minitest::Test
     # Test that PNG and SVG methods are delegated to the barcode
     assert_respond_to barcode, :to_png
     assert_respond_to barcode, :to_svg
-    
+
     # These should not raise errors (actual functionality depends on PDF417 implementation)
     assert_nothing_raised { barcode.to_png rescue nil }
     assert_nothing_raised { barcode.to_svg rescue nil }
@@ -228,7 +228,7 @@ class Croatia::PaymentBarcodeTest < Minitest::Test
       currency: "EUR",
       total_cents: 1000,
       buyer_name: "Test",
-      seller_name: "Test", 
+      seller_name: "Test",
       seller_iban: "HR1234567890123456789",
       model: "HR"  # Only 2 characters - should fail
     )
@@ -237,7 +237,7 @@ class Croatia::PaymentBarcodeTest < Minitest::Test
       barcode.data
     end
 
-    # Test payment_purpose_code field (should be exactly 4 characters when present) 
+    # Test payment_purpose_code field (should be exactly 4 characters when present)
     barcode.model = "HR01"  # Fix model
     barcode.payment_purpose_code = "SAL"  # Only 3 characters - should fail
 
@@ -260,13 +260,13 @@ class Croatia::PaymentBarcodeTest < Minitest::Test
 
     # Should not raise error for nil values
     assert_nothing_raised { barcode.data }
-    
+
     data = barcode.data
     lines = data.split("\n")
-    
+
     # nil values should appear as empty strings in the data
     assert_nil lines[10]  # model
-    assert_nil lines[11]  # reference_number  
+    assert_nil lines[11]  # reference_number
     assert_nil lines[12]  # payment_purpose_code
   end
 
