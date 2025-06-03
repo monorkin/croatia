@@ -136,14 +136,25 @@ invoice.number # => "64/HQ1/001"
 #### Payments
 
 ```ruby
-barcode = invoice.payment_barcode # => Croatia::PDF417
+# Generate a 2D barcode which can be scanned by Croatian banking apps
+# and initiate a payment
+barcode = invoice.payment_barcode # => <Croatia::PDF417 ...>
+
+# You can also set the description, model and reference number
+barcode = invoice.payment_barcode(
+  description: "Dog walking",
+  model: "HR00",
+  reference_number: "202506030001"
+) # => <Croatia::PDF417 ...>
+
 barcode.to_svg # => "<svg>...</svg>"
-barcode.to_png # => <ChunkyPNG::Image>
+barcode.to_png # => "\b..."
 ```
 
 #### Fiscalization
 
 ```ruby
+# Issuer protection code (ZKI) is generated automatically
 invoice.issuer_protection_code # => "abcd1234efgh5678ijkl9012mnop3456"
 
 # Fiscalize an invoice using the sertificate from the config
@@ -151,11 +162,13 @@ invoice.fiscalize!
 # Fiscalize an invoice using a custom certificate and password
 invoice.fiscalize!(certificate: "path/to/your/certificate.p12", password: "your_password")
 
+# In case you want to "undo" a fiscalized invoice, you can reverse the invoice
 invoice.reverse!
 
-qr_code = invoice.fiscalization_qr_code # => Croatia::QRCode
+# Generate a QR code to check the fiscalization status of the invoice
+qr_code = invoice.fiscalization_qr_code # => <Croatia::QRCode ...>
 qr_code.to_svg # => "<svg>...</svg>"
-qr_code.to_png # => <ChunkyPNG::Image>
+barcode.to_png # => "\b..."
 ```
 
 ## Development
@@ -175,6 +188,9 @@ To release a new version, update the version number in `version.rb`, and then ru
 ### Official documentation
 
 Some features of this gem are based on official documentation, which can be found here
+
+**Banking/payments:**
+- [HUB3 standard documentation (payment barcode generation)](https://www.hub.hr/sites/default/files/inline-files/2dbc_0.pdf)
 
 **Fiscalization:**
 - [Fiscalization - Technical specification v2.3](https://porezna-uprava.gov.hr/UserDocsImages/arhiva/HR_Fiskalizacija/Documents/Fiskalizacija%20-%20Tehnicka%20specifikacija%20za%20korisnike_v2.3.pdf)
