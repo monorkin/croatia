@@ -19,8 +19,16 @@ class Croatia::QRCode
   end
 
   def to_svg(**options)
+    qr_code.as_svg(**options)
   end
 
   def to_png(**options)
+    qr_code.as_png(**options)
   end
+
+  private
+
+    def qr_code
+      @qr_code ||= RQRCode::QRCode.new(data, **options)
+    end
 end
