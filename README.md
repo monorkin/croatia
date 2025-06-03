@@ -8,7 +8,8 @@ Croatia is a gem that contains various utilities for performing Croatia-specific
 - [x] Payment barcodes
   - [x] HUB3 standard 2D barcode generation
 - [ ] Invoices
-  - [x] 2D payment barcode generation
+  - [x] Payment
+    - [x] 2D barcode generation
   - [ ] Fiscalization
     - [x] Issuer protection code generation _(ZKI)_
     - [x] QR code generation
