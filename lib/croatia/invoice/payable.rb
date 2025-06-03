@@ -8,7 +8,7 @@ module Croatia::Invoice::Payable
   end
 
   module InstanceMethods
-    def payment_barcode(name: nil, iban: nil, description: nil, model: nil, reference_number: nil)
+    def payment_barcode(description: nil, model: nil, reference_number: nil)
       Croatia::PDF417.ensure_supported!
 
       if currency.length != 3
@@ -20,17 +20,12 @@ module Croatia::Invoice::Payable
         raise ArgumentError, "Total amount exceeds 12 digits: #{amount}"
       end
 
-      name ||= seller.name
-      if name.length > 30
-        raise ArgumentError, "Name must be 30 characters or less: #{name}"
-      end
-
       iban ||= seller.iban
       if iban.length != 21
         raise ArgumentError, "IBAN must be 21 characters: #{iban}"
       end
 
-      description ||= "Račun br. #{number}"
+      description ||= "Racun #{number}"
       if description.length > 35
         raise ArgumentError, "Description must be 35 characters or less: #{description}"
       end
@@ -47,12 +42,15 @@ module Croatia::Invoice::Payable
         BARCODE_HEADER,
         currency,
         amount,
-        name,
+        buyer.name,
+        buyer.address,
+        "#{buyer.postal_code} #{buyer.city}".strip,
+        seller.name,
+        seller.address,
+        "#{seller.postal_code} #{seller.city}".strip,
         iban,
-        description,
-        model,
-        reference_number,
-        due_date&.strftime("%Y%m%d")
+        "#{model} #{reference_number}".strip,
+        description
       ]
 
       Croatia::PDF417.new(data.join("\n"))

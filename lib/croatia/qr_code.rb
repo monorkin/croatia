@@ -17,4 +17,10 @@ class Croatia::QRCode
     @data = data
     @options = options
   end
+
+  def to_svg(**options)
+  end
+
+  def to_png(**options)
+  end
 end

@@ -288,6 +288,22 @@ class Croatia::InvoiceTest < Minitest::Test
       currency: "EUR"
     )
 
+    invoice.seller do |seller|
+      seller.name = "Test Company Ltd"
+      seller.iban = "HR1234567890123456789"
+      seller.address = "Test Address 1"
+      seller.city = "ZAGREB"
+      seller.postal_code = "10000"
+    end
+
+    invoice.buyer do |buyer|
+      buyer.name = "Test Buyer Ltd"
+      buyer.iban = "HR9876543210987654321"
+      buyer.address = "Test Address 2"
+      buyer.city = "SPLIT"
+      buyer.postal_code = "21000"
+    end
+
     # Add multiple line items with different scenarios
     invoice.add_line_item do |item|
       item.description = "Standard item"
@@ -476,7 +492,7 @@ class Croatia::InvoiceTest < Minitest::Test
 
   def test_fiscalization_qr_code_with_issuer_protection_code
     cert_data = generate_test_certificate
-    
+
     config = Croatia::Config.new(
       fiscalization: {
         certificate: cert_data[:p12],
@@ -512,7 +528,7 @@ class Croatia::InvoiceTest < Minitest::Test
 
   def test_fiscalization_qr_code_validation_errors
     cert_data = generate_test_certificate
-    
+
     config = Croatia::Config.new(
       fiscalization: {
         certificate: cert_data[:p12],
