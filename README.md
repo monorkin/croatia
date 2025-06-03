@@ -5,6 +5,8 @@ Croatia is a gem that contains various utilities for performing Croatia-specific
   - [x] Validation
 - [x] UMCN _(JMBG)_
   - [x] Validation
+  - [x] Parsing
+  - [x] Generation
 - [x] Payment barcodes
   - [x] HUB3 standard 2D barcode generation
 - [ ] Invoices
@@ -75,8 +77,28 @@ Croatia::PIN.valid?("12345678900") # => false
 ### UMCNs / JMBGs
 
 ```ruby
+# Validation
 Croatia::UMCN.valid?("0101990123455") # => true
 Croatia::UMCN.valid?("3201990123456") # => false
+
+# Parsing
+num = Croatia::UMCN.parse("1407933312355") # => <Croatia::UMCN ...>
+num.birthday # => <Date: 1933-07-14>
+num.region_of_birth # => "Podravina"
+num.sequence_number # => 235
+num.sex # => :male
+num.checksum # => 5
+num.to_s # => "1407933312355"
+
+# Generation
+# Full list of region codes is available on Wikipedia:
+# https://en.wikipedia.org/wiki/Unique_Master_Citizen_Number
+num = Croatia::UMCN.new(
+  birthday: Date.new(1988, 3, 14),
+  region_code: 33, # Zagreb
+  sequence_number: 123
+)
+num.to_s # => "1403988331237"
 ```
 
 ### Payment Barcodes
@@ -230,6 +252,9 @@ To release a new version, update the version number in `version.rb`, and then ru
 ### Official documentation
 
 Some features of this gem are based on official documentation, which can be found here
+
+**UMCN (JMBG):**
+- [Wikipedia - Unique Master Citizen Number](https://en.wikipedia.org/wiki/Unique_Master_Citizen_Number)
 
 **Banking/payments:**
 - [HUB3 standard documentation (payment barcode generation)](https://www.hub.hr/sites/default/files/inline-files/2dbc_0.pdf)
