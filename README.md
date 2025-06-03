@@ -74,16 +74,26 @@ Croatia::Pin.valid?("12345678900") # => false
 ### Invoices
 
 ```ruby
+# Values can be set during initialization
 invoice = Croatia::Invoice.new(
   sequential_number: 64,
   register_identifier: "001",
   business_location_identifier: "HQ1"
 )
 
-# You can also do `invoice.issuer = Croatia::Invoice::Party.new(pin: "12345678903")`
+# Or via accessors
+invoice.issue_date = Time.now
+invoice.due_date = invoice.issue_date + 15 * 24 * 60 * 60 # 15 days later
+
+# Some values accept builders so you don't have to deal with initializing objects
 invoice.issuer do |issuer|
   issuer.pin = "12345678903"
 end
+# If you don't want to use the builder you can also 
+# do `invoice.issuer = Croatia::Invoice::Party.new(pin: "12345678903")`
+# or set it during initialization
+
+invoice.issuer # => <Croatia::Invoice::Party ...>
 
 invoice.seller do |seller|
   seller.pin = "12345678903"
@@ -113,6 +123,14 @@ invoice.add_line_item do |line_item|
     tax.rate = 0.05
   end
 end
+
+invoice.subtotal # => BigDecimal("200.00")
+invoice.tax # => BigDecimal("62.50")
+invoice.total # => BigDecimal("262.50")
+invoice.total_cents # => 26250
+
+invoice.number # => "64/HQ1/001"
+
 ```
 
 #### Payments
