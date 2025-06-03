@@ -81,7 +81,7 @@ Croatia::UMCN.valid?("3201990123456") # => false
 ### Payment Barcodes
 
 ```ruby
-# IMPORTANT: to be able to generate payment barcodes you have to add
+# IMPORTANT: To be able to generate payment barcodes you have to add
 # the "pdf-417" gem to you Gemfile, or have it installed and required!
 require "pdf-417"
 
@@ -201,6 +201,10 @@ invoice.fiscalize!(certificate: "path/to/your/certificate.p12", password: "your_
 
 # In case you want to "undo" a fiscalized invoice, you can reverse the invoice
 invoice.reverse!
+
+# IMPORTANT: For QR code generation you need to have the "rqrcode" gem in yuor Gemfile
+# or installed and required!
+require "rqrcode"
 
 # Generate a QR code to check the fiscalization status of the invoice
 qr_code = invoice.fiscalization_qr_code # => <Croatia::QRCode ...>
