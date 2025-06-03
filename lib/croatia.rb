@@ -10,6 +10,7 @@ module Croatia
   autoload :QRCode, "croatia/qr_code"
   autoload :PDF417, "croatia/pdf417"
   autoload :PIN, "croatia/pin"
+  autoload :UMCN, "croatia/umcn"
   autoload :Fiscalizer, "croatia/fiscalizer"
   autoload :Invoice, "croatia/invoice"
 

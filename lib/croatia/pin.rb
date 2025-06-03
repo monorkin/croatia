@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# OIB - Osobni Identifikacijski Broj
+# PIN - Personal Identification Number
 module Croatia::PIN
   def self.valid?(pin)
     return false unless pin
