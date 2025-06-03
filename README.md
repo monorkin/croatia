@@ -5,7 +5,7 @@ Croatia is a gem that contains various utilities for performing Croatia-specific
   - [x] Validation
 - [x] UMCN _(JMBG)_
   - [x] Validation
-- [x] Paymbent barcodes
+- [x] Payment barcodes
   - [x] HUB3 standard 2D barcode generation
 - [ ] Invoices
   - [x] 2D payment barcode generation
@@ -194,7 +194,7 @@ barcode = invoice.payment_barcode(
 # Issuer protection code (ZKI) is generated automatically
 invoice.issuer_protection_code # => "abcd1234efgh5678ijkl9012mnop3456"
 
-# Fiscalize an invoice using the sertificate from the config
+# Fiscalize an invoice using the certificate from the config
 invoice.fiscalize!
 # Fiscalize an invoice using a custom certificate and password
 invoice.fiscalize!(certificate: "path/to/your/certificate.p12", password: "your_password")
