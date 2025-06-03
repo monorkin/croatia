@@ -31,8 +31,6 @@ gem "croatia"
 
 ## Usage
 
-This gem doesn't load anything by default, so you need to require the specific module you want to use.
-
 ### Configuration
 
 ```ruby
@@ -67,10 +65,15 @@ end
 ### PINs / OIBs
 
 ```ruby
-require "croatia/pin"
-
 Croatia::PIN.valid?("12345678903") # => true
 Croatia::PIN.valid?("12345678900") # => false
+```
+
+### UMCNs / JMBGs
+
+```ruby
+Croatia::UMCN.valid?("0101990123455") # => true
+Croatia::UMCN.valid?("3201990123456") # => false
 ```
 
 ### Invoices
