@@ -142,12 +142,12 @@ class Croatia::UMCNTest < Minitest::Test
   end
 
   def test_parse_method
-    # Test parsing a valid UMCN  
+    # Test parsing a valid UMCN
     # Let's create one that we know will work
     birthday = Date.new(1999, 1, 1)
     umcn_obj = Croatia::UMCN.new(birthday: birthday, region_code: 33, sequence_number: 0)
     umcn_string = umcn_obj.to_s
-    
+
     umcn = Croatia::UMCN.parse(umcn_string)
 
     assert_instance_of Croatia::UMCN, umcn
@@ -161,7 +161,7 @@ class Croatia::UMCNTest < Minitest::Test
     birthday = Date.new(2005, 1, 1)
     umcn_obj = Croatia::UMCN.new(birthday: birthday, region_code: 33, sequence_number: 0)
     umcn_string = umcn_obj.to_s
-    
+
     umcn = Croatia::UMCN.parse(umcn_string)
 
     assert_equal Date.new(2005, 1, 1), umcn.birthday
@@ -204,7 +204,7 @@ class Croatia::UMCNTest < Minitest::Test
     # Test valid sequence numbers
     umcn.sequence_number = 0
     assert_equal 0, umcn.sequence_number
-    
+
     umcn.sequence_number = 999
     assert_equal 999, umcn.sequence_number
 
@@ -220,7 +220,7 @@ class Croatia::UMCNTest < Minitest::Test
 
   def test_sex_determination
     birthday = Date.new(1990, 1, 1)
-    
+
     # Test male (sequence <= 499)
     umcn_male = Croatia::UMCN.new(birthday: birthday, region_code: 33, sequence_number: 250)
     assert_equal :male, umcn_male.sex
@@ -259,14 +259,14 @@ class Croatia::UMCNTest < Minitest::Test
     umcn = Croatia::UMCN.new(birthday: birthday, region_code: 33, sequence_number: 123)
 
     result = umcn.to_s
-    
+
     # Should be 13 digits
     assert_equal 13, result.length
     assert_match(/\A\d{13}\Z/, result)
 
     # Should start with the date (15.05.990)
     assert result.start_with?("1505990")
-    
+
     # Should contain region code (33) and sequence (123)
     assert result.include?("33")
     assert result.include?("123")
@@ -277,7 +277,7 @@ class Croatia::UMCNTest < Minitest::Test
     umcn = Croatia::UMCN.new(birthday: birthday, region_code: 33, sequence_number: 0)
 
     umcn_string = umcn.to_s
-    
+
     # The generated UMCN should be valid according to our validation
     assert Croatia::UMCN.valid?(umcn_string), "Generated UMCN should be valid: #{umcn_string}"
   end
@@ -313,14 +313,14 @@ class Croatia::UMCNTest < Minitest::Test
 
   def test_millennium_boundary_cases
     # Test 1999 vs 2000 year handling
-    
+
     # 1999 should be in 1000s millennium
     umcn_1999 = Croatia::UMCN.new(birthday: Date.new(1999, 12, 31), region_code: 33, sequence_number: 0)
     umcn_1999_string = umcn_1999.to_s
     parsed_1999 = Croatia::UMCN.parse(umcn_1999_string)
     assert_equal 1999, parsed_1999.birthday.year
 
-    # 2000 should be in 2000s millennium  
+    # 2000 should be in 2000s millennium
     umcn_2000 = Croatia::UMCN.new(birthday: Date.new(2000, 1, 1), region_code: 33, sequence_number: 0)
     umcn_2000_string = umcn_2000.to_s
     parsed_2000 = Croatia::UMCN.parse(umcn_2000_string)
@@ -330,17 +330,17 @@ class Croatia::UMCNTest < Minitest::Test
   def test_region_codes_coverage
     # Test a sampling of different region codes
     birthday = Date.new(1990, 1, 1)
-    
+
     test_regions = [
-      [0, "Yugoslavia"],
-      [17, "Sarajevo"],  # Bosnia
-      [21, "Podgorica"], # Montenegro
-      [33, "Zagreb"],    # Croatia
-      [45, "Skopje"],    # North Macedonia
-      [50, "Slovenia"],  # Slovenia
-      [71, "Belgrade"],  # Serbia
-      [80, "Novi Sad"], # Vojvodina
-      [90, "Pristina"]   # Kosovo
+      [ 0, "Yugoslavia" ],
+      [ 17, "Sarajevo" ],  # Bosnia
+      [ 21, "Podgorica" ], # Montenegro
+      [ 33, "Zagreb" ],    # Croatia
+      [ 45, "Skopje" ],    # North Macedonia
+      [ 50, "Slovenia" ],  # Slovenia
+      [ 71, "Belgrade" ],  # Serbia
+      [ 80, "Novi Sad" ], # Vojvodina
+      [ 90, "Pristina" ]   # Kosovo
     ]
 
     test_regions.each do |code, expected_name|
