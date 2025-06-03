@@ -2,7 +2,7 @@
 
 require "rexml/document"
 
-module Croatia::Invoice::Fiscalizer::XMLBuilder
+module Croatia::Fiscalizer::XMLBuilder
   TNS = "http://www.apis-it.hr/fin/2012/types/f73"
   XSI = "http://www.w3.org/2001/XMLSchema-instance"
 

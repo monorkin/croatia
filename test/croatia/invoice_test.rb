@@ -341,7 +341,17 @@ class Croatia::InvoiceTest < Minitest::Test
 
     invoice.seller do |party|
       party.name = "Test Company Ltd"
+      party.address = "Test Address"
+      party.postal_code = "10000"
+      party.city = "Zagreb"
       party.iban = "HR1234567890123456789"
+    end
+
+    invoice.buyer do |party|
+      party.name = "Buyer Name"
+      party.address = "Buyer Address"
+      party.postal_code = "21000"
+      party.city = "Split"
     end
 
     invoice.add_line_item do |item|
@@ -350,7 +360,6 @@ class Croatia::InvoiceTest < Minitest::Test
       item.add_tax(rate: 0.25)
     end
 
-
     barcode = invoice.payment_barcode
 
     assert_instance_of Croatia::PDF417, barcode
@@ -358,12 +367,15 @@ class Croatia::InvoiceTest < Minitest::Test
       "HRVHUB30",
       "EUR",
       "000000012500", # 125.00 EUR in cents, padded to 12 digits
+      "Buyer Name",
+      "Buyer Address",
+      "21000 Split",
       "Test Company Ltd",
+      "Test Address",
+      "10000 Zagreb",
       "HR1234567890123456789",
-      "Račun br. 1/OFFICE/CASH1",
-      nil,
-      nil,
-      nil
+      "",
+      "Racun 1/OFFICE/CASH1"
     ].join("\n")
 
     assert_equal expected_data, barcode.data
@@ -379,8 +391,18 @@ class Croatia::InvoiceTest < Minitest::Test
     )
 
     invoice.seller do |party|
-      party.name = "Test Company Ltd"
+      party.name = "Seller Company"
+      party.address = "Seller Address"
+      party.postal_code = "10000"
+      party.city = "Zagreb"
       party.iban = "HR1234567890123456789"
+    end
+
+    invoice.buyer do |party|
+      party.name = "Buyer Company"
+      party.address = "Buyer Address"
+      party.postal_code = "21000"
+      party.city = "Split"
     end
 
     invoice.add_line_item do |item|
@@ -389,10 +411,7 @@ class Croatia::InvoiceTest < Minitest::Test
       item.add_tax(rate: 0.25)
     end
 
-
     barcode = invoice.payment_barcode(
-      name: "Custom Name",
-      iban: "HR9876543210987654321",
       description: "Custom payment description",
       model: "HR01",
       reference_number: "12345-67890"
@@ -402,12 +421,15 @@ class Croatia::InvoiceTest < Minitest::Test
       "HRVHUB30",
       "EUR",
       "000000006250", # 62.50 EUR in cents
-      "Custom Name",
-      "HR9876543210987654321",
-      "Custom payment description",
-      "HR01",
-      "12345-67890",
-      "20241231"
+      "Buyer Company",
+      "Buyer Address",
+      "21000 Split",
+      "Seller Company",
+      "Seller Address",
+      "10000 Zagreb",
+      "HR1234567890123456789",
+      "HR01 12345-67890",
+      "Custom payment description"
     ].join("\n")
 
     assert_equal expected_data, barcode.data
@@ -421,14 +443,8 @@ class Croatia::InvoiceTest < Minitest::Test
     end
 
     invoice.currency = "EUR"
-    invoice.seller = Croatia::Invoice::Party.new(name: "X" * 31, iban: "HR1234567890123456789")
-
-    assert_raises(ArgumentError, "Name must be 30 characters or less") do
-      invoice.payment_barcode
-    end
-
-    invoice.seller.name = "Valid Name"
-    invoice.seller.iban = "INVALID_IBAN"
+    invoice.seller = Croatia::Invoice::Party.new(name: "Valid Name", iban: "INVALID_IBAN")
+    invoice.buyer = Croatia::Invoice::Party.new(name: "Test Buyer")
 
     assert_raises(ArgumentError, "IBAN must be 21 characters") do
       invoice.payment_barcode

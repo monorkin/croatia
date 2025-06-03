@@ -11,16 +11,16 @@ module Croatia::Invoice::Fiscalizable
 
   module InstanceMethods
     def fiscalize!(**options)
-      Croatia::Invoice::Fiscalizer.new(**options).fiscalize(self)
+      Croatia::Fiscalizer.new(**options).fiscalize(self)
     end
 
     def reverse!(**options)
       line_items.each(&:reverse)
-      Croatia::Invoice::Fiscalizer.new(**options).fiscalize(self)
+      Croatia::Fiscalizer.new(**options).fiscalize(self)
     end
 
     def issuer_protection_code(**options)
-      Croatia::Invoice::Fiscalizer
+      Croatia::Fiscalizer
         .new(**options)
         .generate_issuer_protection_code(self)
     end

@@ -5,8 +5,8 @@ require "openssl"
 require "securerandom"
 require "tzinfo"
 
-class Croatia::Invoice::Fiscalizer
-  autoload :XMLBuilder, "croatia/invoice/fiscalizer/xml_builder"
+class Croatia::Fiscalizer
+  autoload :XMLBuilder, "croatia/fiscalizer/xml_builder"
 
   TZ = TZInfo::Timezone.get("Europe/Zagreb")
 
