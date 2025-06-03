@@ -67,8 +67,8 @@ end
 ```ruby
 require "croatia/pin"
 
-Croatia::Pin.valid?("12345678903") # => true
-Croatia::Pin.valid?("12345678900") # => false
+Croatia::PIN.valid?("12345678903") # => true
+Croatia::PIN.valid?("12345678900") # => false
 ```
 
 ### Invoices

@@ -366,7 +366,7 @@ class Croatia::InvoiceTest < Minitest::Test
     expected_data = [
       "HRVHUB30",
       "EUR",
-      "000000012500", # 125.00 EUR in cents, padded to 12 digits
+      "000000000012500", # 125.00 EUR in cents, padded to 15 digits
       "Buyer Name",
       "Buyer Address",
       "21000 Split",
@@ -374,7 +374,9 @@ class Croatia::InvoiceTest < Minitest::Test
       "Test Address",
       "10000 Zagreb",
       "HR1234567890123456789",
-      "",
+      nil,
+      nil,
+      nil,
       "Racun 1/OFFICE/CASH1"
     ].join("\n")
 
@@ -420,7 +422,7 @@ class Croatia::InvoiceTest < Minitest::Test
     expected_data = [
       "HRVHUB30",
       "EUR",
-      "000000006250", # 62.50 EUR in cents
+      "000000000006250", # 62.50 EUR in cents
       "Buyer Company",
       "Buyer Address",
       "21000 Split",
@@ -428,7 +430,9 @@ class Croatia::InvoiceTest < Minitest::Test
       "Seller Address",
       "10000 Zagreb",
       "HR1234567890123456789",
-      "HR01 12345-67890",
+      "HR01",
+      "12345-67890",
+      nil,
       "Custom payment description"
     ].join("\n")
 
@@ -438,15 +442,22 @@ class Croatia::InvoiceTest < Minitest::Test
   def test_payment_barcode_validation_errors
     invoice = Croatia::Invoice.new(currency: "INVALID")
 
-    assert_raises(ArgumentError, "Currency code must be 3 characters long") do
+    assert_raises(ArgumentError, "Both buyer and seller must be set before generating a payment barcode") do
       invoice.payment_barcode
     end
 
     invoice.currency = "EUR"
-    invoice.seller = Croatia::Invoice::Party.new(name: "Valid Name", iban: "INVALID_IBAN")
+    invoice.seller = Croatia::Invoice::Party.new(name: "Valid Name", iban: "HR12345678901234567890123456789")
     invoice.buyer = Croatia::Invoice::Party.new(name: "Test Buyer")
 
-    assert_raises(ArgumentError, "IBAN must be 21 characters") do
+    assert_raises(ArgumentError, "Value 'HR12345678901234567890123456789' of field 'seller_iban' exceeds maximum length of 21 characters") do
+      invoice.payment_barcode
+    end
+
+    invoice.seller.iban = "HR1234567890123456789"
+
+    assert_raises(ArgumentError, "Invalid IBAN format 'INVALID_FORMAT' expected IBAN or account number") do
+      invoice.seller.iban = "INVALID_FORMAT"
       invoice.payment_barcode
     end
 
@@ -462,6 +473,46 @@ class Croatia::InvoiceTest < Minitest::Test
 
     assert_raises(ArgumentError, "Reference number must be 22 characters or less") do
       invoice.payment_barcode(reference_number: "X" * 23)
+    end
+  end
+
+  def test_payment_barcode_iban_format_validation
+    invoice = Croatia::Invoice.new(
+      sequential_number: 1,
+      business_location_identifier: "OFFICE",
+      register_identifier: "CASH1",
+      currency: "EUR"
+    )
+
+    invoice.buyer = Croatia::Invoice::Party.new(name: "Test Buyer")
+    invoice.seller = Croatia::Invoice::Party.new(name: "Test Seller")
+
+    invoice.add_line_item do |item|
+      item.description = "Test item"
+      item.unit_price = 100.0
+      item.add_tax(rate: 0.25)
+    end
+
+    # Test valid IBAN format
+    invoice.seller.iban = "HR1234567890123456789"
+    barcode = invoice.payment_barcode
+    assert_instance_of Croatia::PDF417, barcode
+
+    # Test valid account number format
+    invoice.seller.iban = "1234567-1234567890"
+    barcode = invoice.payment_barcode
+    assert_instance_of Croatia::PDF417, barcode
+
+    # Test invalid IBAN format
+    invoice.seller.iban = "INVALID_IBAN_FORMAT"
+    assert_raises(ArgumentError, "Invalid IBAN format") do
+      invoice.payment_barcode
+    end
+
+    # Test invalid account number format
+    invoice.seller.iban = "123456-123456789"
+    assert_raises(ArgumentError, "Invalid IBAN format") do
+      invoice.payment_barcode
     end
   end
 
