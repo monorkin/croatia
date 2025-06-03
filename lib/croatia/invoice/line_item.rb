@@ -14,7 +14,7 @@ class Croatia::Invoice::LineItem
     self.quantity = options.fetch(:quantity, 1)
     self.unit = options[:unit]
     self.unit_price = options.fetch(:unit_price, 0.0)
-    self.taxes = options.fetch(:taxes, [])
+    self.taxes = options.fetch(:taxes, {})
   end
 
   def quantity=(value)
@@ -83,25 +83,21 @@ class Croatia::Invoice::LineItem
   end
 
   def tax
-    taxes.sum { |tax_obj| (subtotal * tax_obj.rate).round(2, BigDecimal::ROUND_HALF_UP) }
+    taxes.values.sum { |tax_obj| (subtotal * tax_obj.rate).round(2, BigDecimal::ROUND_HALF_UP) }
   end
 
   def total
     (subtotal + tax).round(2, BigDecimal::ROUND_HALF_UP)
   end
 
-  def add_tax(tax_obj = nil, **options, &block)
-    if tax_obj.nil?
-      tax_obj = Croatia::Invoice::Tax.new(**options)
+  def add_tax(tax = nil, **options, &block)
+    if tax.nil?
+      tax = Croatia::Invoice::Tax.new(**options)
     end
 
-    tax_obj.tap(&block) if block_given?
+    tax.tap(&block) if block_given?
 
-    unless tax_obj.is_a?(Croatia::Invoice::Tax)
-      raise ArgumentError, "Tax must be an instance of Croatia::Invoice::Tax"
-    end
-
-    taxes << tax_obj
-    tax_obj
+    taxes[tax.type] = tax
+    tax
   end
 end

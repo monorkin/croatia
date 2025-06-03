@@ -19,8 +19,8 @@ class Croatia::Fiscalizer
     @certificate = load_certificate(certificate, password)
   end
 
-  def fiscalize(invoice)
-    document = XMLBuilder.invoice_request(invoice: invoice, message_id: SecureRandom.uuid, timezone: TZ)
+  def fiscalize(invoice:, message_id: SecureRandom.uuid)
+    document = XMLBuilder.invoice_request(invoice: invoice, message_id: message_id, timezone: TZ)
 
     # TODO: Implement the fiscalization logic here
     puts "TODO: Fiscalize invoice #{invoice}"
@@ -50,7 +50,7 @@ class Croatia::Fiscalizer
       elsif cert.is_a?(OpenSSL::PKey::PKey)
         cert
       else
-      cert = File.read(cert) if cert.respond_to?(:to_s) && File.exist?(cert.to_s)
+        cert = File.read(cert) if cert.respond_to?(:to_s) && File.exist?(cert.to_s)
 
         begin
           OpenSSL::PKey.read(cert)

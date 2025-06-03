@@ -9,7 +9,7 @@ class Croatia::Invoice::LineItemTest < Minitest::Test
     assert_equal "Test item", line_item.description
     assert_equal 1, line_item.quantity
     assert_equal 0.0, line_item.unit_price
-    assert_equal [], line_item.taxes
+    assert_equal Hash.new, line_item.taxes
   end
 
   def test_initialize_with_custom_values
@@ -18,15 +18,15 @@ class Croatia::Invoice::LineItemTest < Minitest::Test
       description: "Custom item",
       quantity: 3,
       unit_price: 10.50,
-      taxes: [ tax ]
+      taxes: { tax.type => tax }
     )
 
     assert_equal "Custom item", line_item.description
     assert_equal 3, line_item.quantity
     assert_equal 10.50, line_item.unit_price
     assert_equal 1, line_item.taxes.length
-    assert_equal BigDecimal("0.20"), line_item.taxes.first.rate
-    assert_equal :lower_rate, line_item.taxes.first.category
+    assert_equal BigDecimal("0.20"), line_item.taxes.values.first.rate
+    assert_equal :lower_rate, line_item.taxes.values.first.category
   end
 
   def test_quantity_validation
@@ -86,13 +86,13 @@ class Croatia::Invoice::LineItemTest < Minitest::Test
 
     assert_equal tax_obj, result
     assert_equal 1, line_item.taxes.length
-    assert_equal tax_obj, line_item.taxes.first
+    assert_equal tax_obj, line_item.taxes.values.first
   end
 
   def test_add_tax_validation
     line_item = Croatia::Invoice::LineItem.new(description: "Test")
 
-    assert_raises(ArgumentError, "Tax must be an instance of Croatia::Invoice::Tax") do
+    assert_raises(NoMethodError, "undefined method 'type'") do
       line_item.add_tax("not a tax")
     end
   end
@@ -124,8 +124,8 @@ class Croatia::Invoice::LineItemTest < Minitest::Test
       quantity: 2,
       unit_price: 10.0
     )
-    line_item.add_tax(rate: 0.20)  # 4.0
-    line_item.add_tax(rate: 0.05)  # 1.0
+    line_item.add_tax(rate: 0.20, type: :value_added_tax)  # 4.0
+    line_item.add_tax(rate: 0.05, type: :consumption_tax)  # 1.0
 
     assert_equal BigDecimal("5.0"), line_item.tax
   end

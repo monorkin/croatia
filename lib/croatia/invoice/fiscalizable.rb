@@ -11,12 +11,12 @@ module Croatia::Invoice::Fiscalizable
 
   module InstanceMethods
     def fiscalize!(**options)
-      Croatia::Fiscalizer.new(**options).fiscalize(self)
+      Croatia::Fiscalizer.new(**options).fiscalize(invoice: self)
     end
 
     def reverse!(**options)
       line_items.each(&:reverse)
-      Croatia::Fiscalizer.new(**options).fiscalize(self)
+      Croatia::Fiscalizer.new(**options).fiscalize(invoice: self)
     end
 
     def issuer_protection_code(**options)
@@ -30,7 +30,7 @@ module Croatia::Invoice::Fiscalizable
 
       params = {
         datv: issue_date.strftime("%Y%m%d_%H%M"),
-        izn: total_cents.to_i.to_s
+        izn: total_cents.to_s
       }
 
       if params[:izn].length > 10
