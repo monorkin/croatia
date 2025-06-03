@@ -111,7 +111,7 @@ class Croatia::UMCN
     return false unless umcn.match?(/\A\d{13}\Z/)
 
     parse(umcn).checksum == umcn.strip[-1].to_i
-  rescue Date::Error
+  rescue Date::Error, ArgumentError
     false
   end
 
