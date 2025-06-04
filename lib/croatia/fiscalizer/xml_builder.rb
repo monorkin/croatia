@@ -18,7 +18,7 @@ module Croatia::Fiscalizer::XMLBuilder
   }.freeze
 
   class << self
-    def invoice_request(invoice:, message_id:, specific_purpose: nil, subsequent_delivery: false, timezone: Croatia::Fiscalizer::TZ)
+    def invoice_request(invoice:, message_id:, timezone: Croatia::Fiscalizer::TZ, **options)
       REXML::Document.new.tap do |doc|
         envelope = doc.add_element("tns:RacunZahtjev", {
           "xmlns:tns" => TNS,
@@ -48,9 +48,9 @@ module Croatia::Fiscalizer::XMLBuilder
           payload.add_element("tns:NacinPlac").text = PAYMENT_METHODS[invoice.payment_method]
           payload.add_element("tns:OibOper").text = invoice.issuer.pin
           payload.add_element("tns:ZastKod").text = invoice.issuer_protection_code
-          payload.add_element("tns:NakDost").text = subsequent_delivery ? "true" : "false"
-          payload.add_element("tns:ParagonBrRac").text = invoice.number
-          payload.add_element("tns:SpecNamj").text = specific_purpose if specific_purpose
+          payload.add_element("tns:NakDost").text = options[:subsequent_delivery] ? "true" : "false"
+          payload.add_element("tns:ParagonBrRac").text = options[:paragon_number] if options[:paragon_number]
+          payload.add_element("tns:SpecNamj").text = options[:specific_purpose] if options[:specific_purpose]
         end
       end
     end
