@@ -10,7 +10,6 @@ class Croatia::Invoice
   autoload :Party, "croatia/invoice/party"
   autoload :Tax, "croatia/invoice/tax"
   autoload :LineItem, "croatia/invoice/line_item"
-  autoload :Fiscalizer, "croatia/invoice/fiscalizer"
 
   include Croatia::Enum
   include Fiscalizable
@@ -27,16 +26,13 @@ class Croatia::Invoice
     :sequential_number, # redni broj racuna
     :unique_invoice_identifier # jir
 
-  enum :payment_method, {
-    cash: "G",
-    card: "K",
-    check: "C",
-    transfer: "T",
-    other: "O"
-  }.freeze, allow_nil: true, prefix: :payment_method
+  enum :payment_method, %i[ cash card check transfer other ].freeze, allow_nil: true, prefix: :payment_method
+  enum :sequential_by, %i[ register business_location ].freeze, allow_nil: true, prefix: :sequential_by
 
   def initialize(**options)
     self.line_items = options.delete(:line_items) { [] }
+    self.payment_method = :card
+    self.sequential_by = :register
 
     options.each do |key, value|
       public_send("#{key}=", value)

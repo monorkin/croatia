@@ -22,11 +22,8 @@ class Croatia::Fiscalizer
   end
 
   def fiscalize(invoice:, message_id: SecureRandom.uuid)
-    document = XMLBuilder.invoice_request(invoice: invoice, message_id: message_id, timezone: TZ)
-
-    # TODO: Implement the fiscalization logic here
-    puts "TODO: Fiscalize invoice #{invoice}"
-    puts "GENERATED XML:\n#{document}"
+    _document = XMLBuilder.invoice_request(invoice: invoice, message_id: message_id, timezone: TZ)
+    raise NotImplementedError, "Fiscalization XML generation is not implemented yet"
   end
 
   def generate_issuer_protection_code(invoice)
@@ -80,7 +77,10 @@ class Croatia::Fiscalizer
       elsif cert.is_a?(OpenSSL::PKey::PKey)
         cert
       else
-        cert = File.read(cert) if cert.respond_to?(:to_s) && File.exist?(cert.to_s)
+        begin
+          cert = File.read(cert) if cert.respond_to?(:to_s) && File.exist?(cert.to_s)
+        rescue ArgumentError
+        end
 
         begin
           OpenSSL::PKey.read(cert)

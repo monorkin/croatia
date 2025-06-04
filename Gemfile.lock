@@ -104,6 +104,7 @@ GEM
     ruby-progressbar (1.13.0)
     securerandom (0.4.1)
     stringio (3.1.7)
+    timecop (0.9.10)
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
     unicode-display_width (3.1.4)
@@ -124,6 +125,8 @@ DEPENDENCIES
   rqrcode
   rubocop (~> 1.21)
   rubocop-rails-omakase
+  stringio
+  timecop
 
 BUNDLED WITH
    2.6.8
