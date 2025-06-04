@@ -517,6 +517,8 @@ class Croatia::InvoiceTest < Minitest::Test
   end
 
   def test_fiscalization_qr_code_with_unique_identifier
+    cert_data = generate_test_certificate
+
     invoice = Croatia::Invoice.new(
       unique_invoice_identifier: "12345678-1234-1234-1234-123456789012",
       issue_date: DateTime.new(2024, 1, 15, 14, 30, 0)
@@ -528,17 +530,22 @@ class Croatia::InvoiceTest < Minitest::Test
       item.add_tax(rate: 0.25)
     end
 
-    qr_code = invoice.fiscalization_qr_code
+    qr_code = invoice.fiscalization_qr_code(
+      certificate: cert_data[:p12],
+      password: cert_data[:password]
+    )
 
     assert_instance_of Croatia::QRCode, qr_code
 
-    expected_url = "https://porezna.gov.hr/rn?datv=20240115_1430&izn=15431&jir=12345678-1234-1234-1234-123456789012"
+    expected_url = "https://porezna.gov.hr/rn?datv=20240115_1530&izn=15431&jir=12345678-1234-1234-1234-123456789012"
     assert_equal expected_url, qr_code.data
   end
 
   def test_fiscalization_qr_code_with_options
+    cert_data = generate_test_certificate
+
     invoice = Croatia::Invoice.new(
-      unique_invoice_identifier: "12345678-1234-1234-1234-123456789012",
+      unique_invoice_identifier: "different-uuid",
       issue_date: DateTime.new(2024, 1, 15, 14, 30, 0)
     )
 
@@ -548,12 +555,13 @@ class Croatia::InvoiceTest < Minitest::Test
       item.add_tax(rate: 0.25)
     end
 
-    # Test with custom options that override invoice values
+    # Test with different unique identifier on the invoice
     qr_code = invoice.fiscalization_qr_code(
-      unique_invoice_identifier: "different-uuid"
+      certificate: cert_data[:p12],
+      password: cert_data[:password]
     )
 
-    expected_url = "https://porezna.gov.hr/rn?datv=20240115_1430&izn=15431&jir=different-uuid"
+    expected_url = "https://porezna.gov.hr/rn?datv=20240115_1530&izn=15431&jir=different-uuid"
     assert_equal expected_url, qr_code.data
   end
 
@@ -588,7 +596,7 @@ class Croatia::InvoiceTest < Minitest::Test
 
       qr_code = invoice.fiscalization_qr_code
 
-      expected_url = "https://porezna.gov.hr/rn?datv=20240115_1430&izn=12500&zki="
+      expected_url = "https://porezna.gov.hr/rn?datv=20240115_1530&izn=12500&zki="
       assert qr_code.data.start_with?(expected_url)
     end
   end
@@ -621,6 +629,8 @@ class Croatia::InvoiceTest < Minitest::Test
   end
 
   def test_fiscalization_qr_code_amount_validation
+    cert_data = generate_test_certificate
+
     invoice = Croatia::Invoice.new(
       unique_invoice_identifier: "12345678-1234-1234-1234-123456789012",
       issue_date: DateTime.new(2024, 1, 15, 14, 30, 0)
@@ -634,7 +644,10 @@ class Croatia::InvoiceTest < Minitest::Test
     end
 
     assert_raises(ArgumentError, "Total amount exceeds 10 digits") do
-      invoice.fiscalization_qr_code
+      invoice.fiscalization_qr_code(
+        certificate: cert_data[:p12],
+        password: cert_data[:password]
+      )
     end
   end
 

@@ -4,11 +4,13 @@ require "digest/md5"
 require "openssl"
 require "securerandom"
 require "tzinfo"
+require "uri"
 
 class Croatia::Fiscalizer
   autoload :XMLBuilder, "croatia/fiscalizer/xml_builder"
 
   TZ = TZInfo::Timezone.get("Europe/Zagreb")
+  QR_CODE_BASE_URL = "https://porezna.gov.hr/rn"
 
   attr_reader :certificate
 
@@ -60,7 +62,7 @@ class Croatia::Fiscalizer
       params[:zki] = generate_issuer_protection_code(invoice)
     end
 
-    if (params[:jir] && params[:zki]) || (params[:jir].nil? && params[:zki].nil?)
+    if params[:jir].nil? && params[:zki].nil?
       raise ArgumentError, "Either unique_invoice_identifier or issuer_protection_code must be provided"
     end
 

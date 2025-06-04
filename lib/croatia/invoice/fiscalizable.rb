@@ -1,10 +1,6 @@
 # frozen_string_literal: true
 
-require "uri"
-
 module Croatia::Invoice::Fiscalizable
-  QR_CODE_BASE_URL = "https://porezna.gov.hr/rn"
-
   def self.included(base)
     base.include InstanceMethods
   end
