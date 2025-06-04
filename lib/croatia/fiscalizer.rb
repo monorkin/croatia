@@ -42,6 +42,34 @@ class Croatia::Fiscalizer
     Digest::MD5.hexdigest(signature).downcase
   end
 
+  def generate_verification_qr_code(invoice)
+    Croatia::QRCode.ensure_supported!
+
+    params = {
+      datv: TZ.to_local(invoice.issue_date).strftime("%Y%m%d_%H%M"),
+      izn: invoice.total_cents.to_s
+    }
+
+    if params[:izn].length > 10
+      raise ArgumentError, "Total amount exceeds 10 digits: #{params[:izn]}"
+    end
+
+    if invoice.unique_invoice_identifier
+      params[:jir] = invoice.unique_invoice_identifier
+    else
+      params[:zki] = generate_issuer_protection_code(invoice)
+    end
+
+    if (params[:jir] && params[:zki]) || (params[:jir].nil? && params[:zki].nil?)
+      raise ArgumentError, "Either unique_invoice_identifier or issuer_protection_code must be provided"
+    end
+
+    query_string = URI.encode_www_form(params)
+    url = "#{QR_CODE_BASE_URL}?#{query_string}"
+
+    Croatia::QRCode.new(url)
+  end
+
   private
 
     def load_certificate(cert, password)
