@@ -141,7 +141,9 @@ barcode.to_png # => "\b..."
 invoice = Croatia::Invoice.new(
   sequential_number: 64,
   register_identifier: "001",
-  business_location_identifier: "HQ1"
+  business_location_identifier: "HQ1",
+  sequential_by: :business_location,
+  payment_method: :card
 )
 
 # Or via accessors
