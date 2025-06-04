@@ -1,8 +1,32 @@
 # frozen_string_literal: true
 
-# OIB - Osobni Identifikacijski Broj
-# PIN - Personal Identification Number
+# Validates Croatian Personal Identification Numbers (OIB/PIN)
+#
+# OIB (Osobni Identifikacijski Broj) is the Croatian Personal Identification Number,
+# an 11-digit number used to uniquely identify Croatian citizens and legal entities.
+# This module provides validation functionality using the official checksum algorithm.
+#
+# The validation uses a modulo 10 checksum algorithm where:
+# - The first 10 digits are multiplied by specific weights
+# - A control digit is calculated and compared with the 11th digit
+#
+# @example Validating a PIN
+#   Croatia::PIN.valid?("12345678901")  # => true/false
+#   Croatia::PIN.valid?(12345678901)    # => true/false
+#
+# @author Croatia Gem
+# @since 0.1.0
 module Croatia::PIN
+  # Validates a Croatian Personal Identification Number (OIB/PIN)
+  #
+  # @param pin [String, Integer] the PIN to validate (11 digits)
+  # @return [Boolean] true if the PIN is valid, false otherwise
+  #
+  # @example
+  #   Croatia::PIN.valid?("12345678901")  # => true/false
+  #   Croatia::PIN.valid?(12345678901)    # => true/false
+  #   Croatia::PIN.valid?("invalid")      # => false
+  #   Croatia::PIN.valid?(nil)            # => false
   def self.valid?(pin)
     return false unless pin
 

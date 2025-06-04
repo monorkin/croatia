@@ -1,7 +1,38 @@
 # frozen_string_literal: true
 
-# JMBG - Jedinstveni Matični Broj Građana
-# UMCN - Unique Master Citizen Number
+# Validates and parses Croatian Unique Master Citizen Numbers (JMBG/UMCN)
+#
+# JMBG (Jedinstveni Matični Broj Građana) is the Unique Master Citizen Number
+# used in former Yugoslav countries including Croatia. This 13-digit number
+# encodes birth date, region of birth, sequence number, and includes a checksum.
+#
+# The format is: DDMMYYYRRSSSC where:
+# - DD: day of birth (01-31)
+# - MM: month of birth (01-12)
+# - YYY: last three digits of birth year
+# - RR: region code (see REGION_CODES constant)
+# - SSS: sequence number (000-999, where ≤499 = male, ≥500 = female)
+# - C: checksum digit
+#
+# @example Validating a UMCN
+#   Croatia::UMCN.valid?("1234567890123")  # => true/false
+#
+# @example Parsing a UMCN
+#   umcn = Croatia::UMCN.parse("1234567890123")
+#   umcn.birthday      # => Date object
+#   umcn.sex           # => :male or :female
+#   umcn.region_of_birth # => "Zagreb"
+#
+# @example Creating a UMCN instance
+#   umcn = Croatia::UMCN.new(
+#     birthday: Date.new(1990, 1, 1),
+#     sequence_number: 123,
+#     region_code: 33
+#   )
+#   umcn.to_s          # => "0101903301234"
+#
+# @author Croatia Gem
+# @since 0.3.0
 class Croatia::UMCN
   WEIGHTS = [ 7, 6, 5, 4, 3, 2, 7, 6, 5, 4, 3, 2 ]
   REGION_CODES = {
@@ -104,8 +135,25 @@ class Croatia::UMCN
   }.freeze
 
 
-  attr_accessor :birthday, :region_code, :sequence_number, :checkusm
+  # @!attribute [rw] birthday
+  #   @return [Date] the birthday extracted from the UMCN
+  # @!attribute [rw] region_code
+  #   @return [Integer] the region code (see REGION_CODES constant)
+  # @!attribute [rw] sequence_number
+  #   @return [Integer] the sequence number (0-999)
+  # @!attribute [rw] checksum
+  #   @return [Integer] the checksum digit
+  attr_accessor :birthday, :region_code, :sequence_number, :checksum
 
+  # Validates a Croatian Unique Master Citizen Number (JMBG/UMCN)
+  #
+  # @param umcn [String] the UMCN to validate (13 digits)
+  # @return [Boolean] true if the UMCN is valid, false otherwise
+  #
+  # @example
+  #   Croatia::UMCN.valid?("1234567890123")  # => true/false
+  #   Croatia::UMCN.valid?(nil)              # => false
+  #   Croatia::UMCN.valid?("invalid")        # => false
   def self.valid?(umcn)
     return false if umcn.nil?
     return false unless umcn.match?(/\A\d{13}\Z/)
@@ -115,6 +163,18 @@ class Croatia::UMCN
     false
   end
 
+  # Parses a Croatian UMCN and extracts its components
+  #
+  # @param umcn [String] the UMCN to parse (13 digits)
+  # @return [Croatia::UMCN] parsed UMCN instance
+  # @raise [Date::Error] if the date is invalid
+  # @raise [ArgumentError] if the format is invalid
+  #
+  # @example
+  #   umcn = Croatia::UMCN.parse("1234567890123")
+  #   umcn.birthday      # => Date object
+  #   umcn.sex           # => :male or :female
+  #   umcn.region_of_birth # => "Zagreb"
   def self.parse(umcn)
     digits = umcn.chars.map(&:to_i)
 
@@ -134,12 +194,22 @@ class Croatia::UMCN
     new(birthday: birthday, region_code: region_code, sequence_number: sequence_number)
   end
 
+  # Creates a new UMCN instance
+  #
+  # @param birthday [Date] the birthday
+  # @param region_code [Integer] the region code (see REGION_CODES)
+  # @param sequence_number [Integer] the sequence number (0-999)
   def initialize(birthday:, region_code:, sequence_number:)
     @birthday = birthday
     @region_code = region_code
     @sequence_number = sequence_number
   end
 
+  # Sets the region code with validation
+  #
+  # @param value [Integer] the region code
+  # @raise [ArgumentError] if the region code is invalid
+  # @return [Integer] the validated region code
   def region_code=(value)
     value = value.to_i
 
@@ -150,6 +220,11 @@ class Croatia::UMCN
     end
   end
 
+  # Sets the sequence number with validation
+  #
+  # @param value [Integer] the sequence number (0-999)
+  # @raise [ArgumentError] if the sequence number is out of range
+  # @return [Integer] the validated sequence number
   def sequence_number=(value)
     value = value.to_i
 
@@ -160,14 +235,23 @@ class Croatia::UMCN
     @sequence_number = value
   end
 
+  # Determines the sex based on the sequence number
+  #
+  # @return [Symbol] :male if sequence_number <= 499, :female otherwise
   def sex
     sequence_number <= 499 ? :male : :female
   end
 
+  # Gets the region of birth name
+  #
+  # @return [String] the region name from REGION_CODES
   def region_of_birth
     REGION_CODES[region_code]
   end
 
+  # Converts the UMCN to its string representation
+  #
+  # @return [String] the 13-digit UMCN string with checksum
   def to_s
     parts = []
     parts << birthday.strftime("%d%m")
@@ -185,6 +269,9 @@ class Croatia::UMCN
     parts.join
   end
 
+  # Calculates and returns the checksum digit
+  #
+  # @return [Integer] the checksum digit (0-9)
   def checksum
     to_s[-1].to_i
   end
