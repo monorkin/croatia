@@ -377,7 +377,7 @@ class Croatia::InvoiceTest < Minitest::Test
       nil,
       nil,
       nil,
-      "Racun 1/OFFICE/CASH1"
+      "Račun 1/OFFICE/CASH1"
     ].join("\n")
 
     assert_equal expected_data, barcode.data

@@ -32,6 +32,8 @@ GEM
     date (3.4.1)
     drb (2.2.3)
     erb (5.0.1)
+    ffi (1.17.2)
+    ffi (1.17.2-x86_64-linux-gnu)
     i18n (1.14.7)
       concurrent-ruby (~> 1.0)
     io-console (0.8.0)
@@ -43,14 +45,13 @@ GEM
     language_server-protocol (3.17.0.5)
     lint_roller (1.1.0)
     logger (1.7.0)
+    mini_portile2 (2.8.9)
     minitest (5.25.5)
     openssl (3.3.0)
     parallel (1.27.0)
     parser (3.3.8.0)
       ast (~> 2.4.1)
       racc
-    pdf-417 (0.9.5)
-      chunky_png (~> 1)
     pp (0.6.2)
       prettyprint
     prettyprint (0.2.0)
@@ -102,6 +103,9 @@ GEM
       rubocop-performance (>= 1.24)
       rubocop-rails (>= 2.30)
     ruby-progressbar (1.13.0)
+    ruby-zint (1.4.0)
+      ffi (~> 1.15)
+      mini_portile2 (~> 2.1)
     securerandom (0.4.1)
     stringio (3.1.7)
     timecop (0.9.10)
@@ -120,11 +124,11 @@ DEPENDENCIES
   croatia!
   irb
   minitest (~> 5.16)
-  pdf-417
   rake (~> 13.0)
   rqrcode
   rubocop (~> 1.21)
   rubocop-rails-omakase
+  ruby-zint
   stringio
   timecop
 

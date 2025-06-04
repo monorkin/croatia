@@ -4,7 +4,7 @@ class Croatia::QRCode
   def self.ensure_supported!
     return if supported?
 
-    raise LoadError, "RQRCode library is not loaded. Please ensure you have the rqrcode gem installed."
+    raise LoadError, "RQRCode library is not loaded. Please ensure you have the rqrcode gem installed and required."
   end
 
   def self.supported?

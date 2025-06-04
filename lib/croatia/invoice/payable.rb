@@ -11,7 +11,7 @@ module Croatia::Invoice::Payable
         raise ArgumentError, "Both buyer and seller must be set before generating a payment barcode"
       end
 
-      description ||= "Racun #{number}"
+      description ||= "Račun #{number}"
 
       options = {
         currency: currency,

@@ -4,11 +4,11 @@ class Croatia::PDF417
   def self.ensure_supported!
     return if supported?
 
-    raise LoadError, "PDF417 library is not loaded. Please ensure you have the pdf-417 gem installed."
+    raise LoadError, "Zint library is not loaded. Please ensure you have the ruby-zint gem installed and required."
   end
 
   def self.supported?
-    defined?(PDF417)
+    defined?(Zint)
   end
 
   attr_reader :data, :options
@@ -19,36 +19,17 @@ class Croatia::PDF417
   end
 
   def to_svg(**options)
-    ary = bar
+    vec = barcode.to_vector
 
-    unless ary
-      raise ArgumentError, "Data is not valid for PDF417 encoding"
-    end
-
-    options[:x_scale] ||= 1
-    options[:y_scale] ||= 1
-    options[:margin]  ||= 10
-
-    full_width  = (ary.first.size * options[:x_scale]) + (options[:margin] * 2)
-    full_height = (ary.size       * options[:y_scale]) + (options[:margin] * 2)
-
-    dots = ary.map { |l| l.chars.map { |c| c == "1" } }
+    foreground_color = options[:foreground_color] || "black"
+    background_color = options[:background_color] || "white"
 
     svg = []
-    svg << %Q(<?xml version="1.0" standalone="no"?>)
-    svg << %Q(<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="#{full_width}" height="#{full_height}">)
-    svg << %Q(<rect width="100%" height="100%" fill="white" />)
+    svg << %Q(<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="#{vec.width.to_i}" height="#{vec.height.to_i}" viewBox="0 0 #{vec.width.to_i} #{vec.height.to_i}">)
+    svg << %Q(<rect width="#{vec.width.to_i}" height="#{vec.height.to_i}" fill="#{background_color}" />)
 
-    y = options[:margin]
-    dots.each do |line|
-      x = options[:margin]
-      line.each do |bar|
-        if bar
-          svg << %Q(<rect x="#{x}" y="#{y}" width="#{options[:x_scale]}" height="#{options[:y_scale]}" fill="black" />)
-        end
-        x += options[:x_scale]
-      end
-      y += options[:y_scale]
+    vec.each_rectangle do |rect|
+      svg << %Q(<rect x="#{rect.x.to_i}" y="#{rect.y.to_i}" width="#{rect.width.to_i}" height="#{rect.height.to_i}" fill="#{foreground_color}" />)
     end
 
     svg << "</svg>"
@@ -56,16 +37,12 @@ class Croatia::PDF417
   end
 
   def to_png(**options)
-    barcode.to_png(**options)
+    barcode.to_memory_file(extension: ".png")
   end
 
   private
 
     def barcode
-      @barcode ||= PDF417.new(data).tap(&:generate)
-    end
-
-    def bar
-      barcode.instance_variable_get(:@bar)
+      @barcode ||= Zint::Barcode.new(**options, value: data, symbology: Zint::BARCODE_PDF417)
     end
 end

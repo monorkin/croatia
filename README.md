@@ -105,8 +105,8 @@ num.to_s # => "1403988331237"
 
 ```ruby
 # IMPORTANT: To be able to generate payment barcodes you have to add
-# the "pdf-417" gem to you Gemfile, or have it installed and required!
-require "pdf-417"
+# the "ruby-zint" gem to you Gemfile, or have it installed and required!
+require "ruby-zint"
 
 # Generate a 2D barcode which can be scanned by Croatian banking apps
 # and initiate a payment
