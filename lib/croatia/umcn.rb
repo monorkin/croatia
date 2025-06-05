@@ -34,7 +34,7 @@
 # @author Croatia Gem
 # @since 0.3.0
 class Croatia::UMCN
-  WEIGHTS = [ 7, 6, 5, 4, 3, 2, 7, 6, 5, 4, 3, 2 ]
+  WEIGHTS = [ 7, 6, 5, 4, 3, 2, 7, 6, 5, 4, 3, 2 ].freeze
   REGION_CODES = {
     # Special / Foreign
     0 => "Yugoslavia",
