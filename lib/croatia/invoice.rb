@@ -64,7 +64,7 @@ class Croatia::Invoice
   end
 
   def tax_breakdown
-    line_items.flat_map(&:tax_breakdown)
+    line_items.flat_map(&:tax_breakdown).group_by { |breakdown| breakdown[:type] }
   end
 
   def vat_exempt_amount
