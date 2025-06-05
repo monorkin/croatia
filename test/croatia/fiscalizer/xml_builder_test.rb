@@ -71,6 +71,7 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
           message_id: message_id,
           subsequent_delivery: false,
           specific_purpose: "TEST",
+          paragon_number: "123/458/5"
         )
 
         expected_xml = <<~XML
@@ -89,12 +90,13 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
                 <tns:OznPosPr>POSL1</tns:OznPosPr>
                 <tns:OznNapUr>12</tns:OznNapUr>
               </tns:BrRac>
-            <tns:IznosUkupno>86.86</tns:IznosUkupno>
+              <tns:IznosOslobPdv>45.0</tns:IznosOslobPdv>
+              <tns:IznosUkupno>86.86</tns:IznosUkupno>
               <tns:NacinPlac>K</tns:NacinPlac>
               <tns:OibOper>01234567890</tns:OibOper>
               <tns:ZastKod>01ad8d8cf0cb002e28fd68a6db6387f2</tns:ZastKod>
               <tns:NakDost>false</tns:NakDost>
-              <tns:ParagonBrRac>123456789/POSL1/12</tns:ParagonBrRac>
+              <tns:ParagonBrRac>123/458/5</tns:ParagonBrRac>
               <tns:SpecNamj>TEST</tns:SpecNamj>
             </tns:Racun>
           </tns:RacunZahtjev>

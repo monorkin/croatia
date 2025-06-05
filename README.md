@@ -179,14 +179,25 @@ invoice.add_line_item do |line_item|
   line_item.unit_price = 100.0
 
   # Looks up the tax rate from the config
-  line_item.add_tax(type: :value_added_tax, category: :standard)
+  line_item.add_tax(type: :value_added_tax, category: :standard) # PDV 25%
+  # line_item.add_tax(type: :value_added_tax, category: :lower_rate) # PDV 13%
+  # line_item.add_tax(type: :value_added_tax, category: :exempt) # PDV 0% - e.g. for invoices to the USA
+  # line_item.add_tax(type: :value_added_tax, category: :reverse_charge) # PDV 0% - for invoices to the EU
+  # line_item.add_tax(type: :value_added_tax, category: :lower_rate, rate: 0.01) # You can override the default rate
 
   # Set a custom tax rate
   line_item.add_tax do |tax|
     tax.type = :other
     tax.category = :lower_rate
     tax.rate = 0.05
+    tax.name = "Porez na luksuz"
   end
+
+  # Remove a tax
+  # line_item.remove_tax(:other)
+
+  # Clear all taxes
+  # line_item.clear_taxes
 end
 
 invoice.subtotal # => BigDecimal("200.00")

@@ -59,6 +59,18 @@ class Croatia::Invoice
     (total * 100).to_i
   end
 
+  def tax_breakdown
+    line_items.flat_map(&:tax_breakdown)
+  end
+
+  def vat_exempt_amount
+    line_items.select(&:vat_exempt?).sum(&:subtotal).to_d
+  end
+
+  def amount_outside_vat_scope
+    line_items.select(&:outside_vat_scope?).sum(&:subtotal).to_d
+  end
+
   def add_line_item(line_item = nil, &block)
     if line_item.nil? && block.nil?
       raise ArgumentError, "You must provide a line item or a block"

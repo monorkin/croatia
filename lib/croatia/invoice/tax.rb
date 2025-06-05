@@ -24,4 +24,33 @@ class Croatia::Invoice::Tax
 
     @rate = value.to_d
   end
+
+  def name=(value)
+    if value.nil?
+      @name = nil
+      return
+    end
+
+    unless values.respond_to?(:to_s)
+      raise ArgumentError, "Tax name must be castable to a string"
+    end
+
+    value = value.to_s
+
+    if value.length > 100
+      raise ArgumentError, "Tax name must not exceed 100 characters"
+    end
+
+    @name = value
+  end
+
+  def name
+    if @name
+      @name
+    elsif value_added_tax?
+      "Porez na dodanu vrijednost"
+    elsif consumption_tax?
+      "Porez na potrošnju"
+    end
+  end
 end

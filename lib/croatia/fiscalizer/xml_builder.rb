@@ -44,6 +44,9 @@ module Croatia::Fiscalizer::XMLBuilder
 
           # TODO: Add taxes
 
+          payload.add_element("tns:IznosOslobPdv").text = invoice.vat_exempt_amount.to_f.to_s if invoice.vat_exempt_amount.positive?
+          payload.add_element("tns:IznosNePodlOpor").text = invoice.amount_outside_vat_scope.to_f.to_s if invoice.amount_outside_vat_scope.positive?
+
           payload.add_element("tns:IznosUkupno").text = invoice.total.to_f.to_s
           payload.add_element("tns:NacinPlac").text = PAYMENT_METHODS[invoice.payment_method]
           payload.add_element("tns:OibOper").text = invoice.issuer.pin

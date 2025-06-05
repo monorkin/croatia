@@ -82,8 +82,24 @@ class Croatia::Invoice::LineItem
     gross - discount
   end
 
+  def tax_breakdown
+    taxes.filter_map do |type, tax|
+      next if tax.nil?
+
+      {
+        rate: tax.rate,
+        base: subtotal,
+        tax: (subtotal * tax.rate).round(2, BigDecimal::ROUND_HALF_UP),
+        taxable: !tax.exempt?,
+        name: tax.other? ? tax.name : tax.type,
+        type: tax.type,
+        category: tax.category
+      }
+    end
+  end
+
   def tax
-    taxes.values.sum { |tax_obj| (subtotal * tax_obj.rate).round(2, BigDecimal::ROUND_HALF_UP) }
+    tax_breakdown.sum { |breakdown| breakdown[:tax] }
   end
 
   def total
@@ -99,5 +115,21 @@ class Croatia::Invoice::LineItem
 
     taxes[tax.type] = tax
     tax
+  end
+
+  def remove_tax(type)
+    taxes.delete(type)
+  end
+
+  def clear_taxes
+    taxes.clear
+  end
+
+  def vat_exempt?
+    !!taxes[:value_added_tax]&.exempt?
+  end
+
+  def outside_vat_scope?
+    !!taxes[:value_added_tax]&.outside_scope?
   end
 end
