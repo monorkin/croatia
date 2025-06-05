@@ -30,11 +30,11 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
         invoice.due_date = invoice.issue_date + 15 * 24 * 60 * 60 # 15 days later
 
         invoice.issuer do |issuer|
-          issuer.pin = "01234567890"
+          issuer.pin = "86988477146"
         end
 
         invoice.seller do |seller|
-          seller.pin = "98765432198"
+          seller.pin = "05575695113"
           seller.pays_vat = true
         end
 
@@ -81,7 +81,7 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
               <tns:DatumVrijemeSlanja>04.06.2025T07:44:31</tns:DatumVrijemeSlanja>
             </tns:Zaglavlje>
             <tns:Racun>
-              <tns:Oib>98765432198</tns:Oib>
+              <tns:Oib>05575695113</tns:Oib>
               <tns:USustPdv>true</tns:USustPdv>
               <tns:DatVrijeme>04.06.2025T07:44:26</tns:DatVrijeme>
               <tns:OznSlijed>N</tns:OznSlijed>
@@ -93,8 +93,8 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
               <tns:IznosOslobPdv>45.0</tns:IznosOslobPdv>
               <tns:IznosUkupno>86.86</tns:IznosUkupno>
               <tns:NacinPlac>K</tns:NacinPlac>
-              <tns:OibOper>01234567890</tns:OibOper>
-              <tns:ZastKod>01ad8d8cf0cb002e28fd68a6db6387f2</tns:ZastKod>
+              <tns:OibOper>86988477146</tns:OibOper>
+              <tns:ZastKod>f243aad7172c46ccebec7fa1aad1503d</tns:ZastKod>
               <tns:NakDost>false</tns:NakDost>
               <tns:ParagonBrRac>123/458/5</tns:ParagonBrRac>
               <tns:SpecNamj>TEST</tns:SpecNamj>

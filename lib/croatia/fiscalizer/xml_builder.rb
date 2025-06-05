@@ -19,6 +19,14 @@ module Croatia::Fiscalizer::XMLBuilder
 
   class << self
     def invoice_request(invoice:, message_id:, timezone: Croatia::Fiscalizer::TZ, **options)
+      if options[:paragon_number] && options[:paragon_number].to_s.length > 100
+        raise ArgumentError, "Paragon number must be less than 100 characters long"
+      end
+
+      if options[:specific_purpose] && options[:specific_purpose].length > 1000
+        raise ArgumentError, "Specific purpose must be less than 1000 characteres long"
+      end
+
       REXML::Document.new.tap do |doc|
         envelope = doc.add_element("tns:RacunZahtjev", {
           "xmlns:tns" => TNS,

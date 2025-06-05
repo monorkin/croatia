@@ -585,7 +585,7 @@ class Croatia::InvoiceTest < Minitest::Test
 
       invoice.issuer do |party|
         party.name = "Test Issuer"
-        party.pin = "12345678901"
+        party.pin = Croatia::PIN.random
       end
 
       invoice.add_line_item do |item|
@@ -664,7 +664,7 @@ class Croatia::InvoiceTest < Minitest::Test
     # Create issuer with PIN
     invoice.issuer do |party|
       party.name = "Test Issuer"
-      party.pin = "12345678901"
+      party.pin = Croatia::PIN.random
     end
 
     invoice.add_line_item do |item|
