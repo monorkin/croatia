@@ -4,6 +4,7 @@ require "bigdecimal"
 require "bigdecimal/util"
 
 class Croatia::Invoice
+  autoload :Identifiable, "croatia/invoice/identifiable"
   autoload :Fiscalizable, "croatia/invoice/fiscalizable"
   autoload :EInvoicable, "croatia/invoice/e_invoicable"
   autoload :Payable, "croatia/invoice/payable"
@@ -12,18 +13,21 @@ class Croatia::Invoice
   autoload :LineItem, "croatia/invoice/line_item"
 
   include Croatia::Enum
+  include Identifiable
   include Fiscalizable
   include EInvoicable
   include Payable
 
-  attr_reader :issue_date, :due_date
   attr_writer :issuer, :seller, :buyer
-  attr_accessor \
+  attr_reader \
     :business_location_identifier, # oznaka poslovnog prostora
+    :due_date,
+    :issue_date,
+    :register_identifier, # oznaka naplatnog uredaja
+    :sequential_number # redni broj racuna
+  attr_accessor \
     :currency,
     :line_items,
-    :register_identifier, # oznaka naplatnog uredaja
-    :sequential_number, # redni broj racuna
     :unique_invoice_identifier # jir
 
   enum :payment_method, %i[ cash card check transfer other ].freeze, allow_nil: true, prefix: :payment_method
@@ -33,14 +37,14 @@ class Croatia::Invoice
     self.line_items = options.delete(:line_items) { [] }
     self.payment_method = :card
     self.sequential_by = :register
+    self.currency = "EUR"
+    self.business_location_identifier = options.delete(:business_location_identifier)
+    self.register_identifier = options.delete(:register_identifier)
+    self.sequential_number = options.delete(:sequential_number)
 
     options.each do |key, value|
       public_send("#{key}=", value)
     end
-  end
-
-  def number
-    [ sequential_number, business_location_identifier, register_identifier ].join("/")
   end
 
   def subtotal

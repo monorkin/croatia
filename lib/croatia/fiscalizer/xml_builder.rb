@@ -19,6 +19,10 @@ module Croatia::Fiscalizer::XMLBuilder
 
   class << self
     def invoice_request(invoice:, message_id:, timezone: Croatia::Fiscalizer::TZ, **options)
+      if message_id.nil? || message_id.length != 36
+        raise ArgumentError, "Message ID must be a valid UUID (36 characters long)"
+      end
+
       if options[:paragon_number] && options[:paragon_number].to_s.length > 100
         raise ArgumentError, "Paragon number must be less than 100 characters long"
       end
@@ -42,7 +46,7 @@ module Croatia::Fiscalizer::XMLBuilder
           payload.add_element("tns:Oib").text = invoice.seller.pin
           payload.add_element("tns:USustPdv").text = invoice.seller.pays_vat ? "true" : "false"
           payload.add_element("tns:DatVrijeme").text = timezone.to_local(invoice.issue_date).strftime("%d.%m.%YT%H:%M:%S")
-          payload.add_element("tns:OznSlijed").text = SEQUENCE_MARK[invoice.sequential_by]
+          payload.add_element("tns:OznSlijed").text = SEQUENCE_MARK.fetch(invoice.sequential_by)
 
           payload.add_element("tns:BrRac").tap do |invoice_number|
             invoice_number.add_element("tns:BrOznRac").text = invoice.sequential_number.to_s
@@ -56,7 +60,7 @@ module Croatia::Fiscalizer::XMLBuilder
           payload.add_element("tns:IznosNePodlOpor").text = invoice.amount_outside_vat_scope.to_f.to_s if invoice.amount_outside_vat_scope.positive?
 
           payload.add_element("tns:IznosUkupno").text = invoice.total.to_f.to_s
-          payload.add_element("tns:NacinPlac").text = PAYMENT_METHODS[invoice.payment_method]
+          payload.add_element("tns:NacinPlac").text = PAYMENT_METHODS.fetch(invoice.payment_method)
           payload.add_element("tns:OibOper").text = invoice.issuer.pin
           payload.add_element("tns:ZastKod").text = invoice.issuer_protection_code
           payload.add_element("tns:NakDost").text = options[:subsequent_delivery] ? "true" : "false"

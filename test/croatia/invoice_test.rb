@@ -6,27 +6,31 @@ class Croatia::InvoiceTest < Minitest::Test
   include CertificateHelper
 
   def test_initialize_with_defaults
-    invoice = Croatia::Invoice.new
+    invoice = Croatia::Invoice.new(
+      business_location_identifier: "LOC1",
+      register_identifier: "1",
+      sequential_number: "1"
+    )
 
     assert_equal [], invoice.line_items
-    assert_nil invoice.business_location_identifier
-    assert_nil invoice.currency
-    assert_nil invoice.register_identifier
-    assert_nil invoice.sequential_number
+    assert_equal "LOC1", invoice.business_location_identifier
+    assert_equal "EUR", invoice.currency
+    assert_equal "1", invoice.register_identifier
+    assert_equal "1", invoice.sequential_number
   end
 
   def test_initialize_with_options
     invoice = Croatia::Invoice.new(
       business_location_identifier: "LOC001",
       currency: "EUR",
-      register_identifier: "REG001",
+      register_identifier: "1",
       sequential_number: 123
     )
 
     assert_equal "LOC001", invoice.business_location_identifier
     assert_equal "EUR", invoice.currency
-    assert_equal "REG001", invoice.register_identifier
-    assert_equal 123, invoice.sequential_number
+    assert_equal "1", invoice.register_identifier
+    assert_equal "123", invoice.sequential_number
   end
 
   def test_initialize_with_line_items
@@ -35,7 +39,12 @@ class Croatia::InvoiceTest < Minitest::Test
       Croatia::Invoice::LineItem.new(description: "Item 2", unit_price: 20.0)
     ]
 
-    invoice = Croatia::Invoice.new(line_items: line_items)
+    invoice = Croatia::Invoice.new(
+      line_items: line_items,
+      business_location_identifier: "LOC1",
+      register_identifier: "1",
+      sequential_number: "1"
+    )
 
     assert_equal 2, invoice.line_items.length
     assert_equal "Item 1", invoice.line_items.first.description
@@ -46,14 +55,18 @@ class Croatia::InvoiceTest < Minitest::Test
     invoice = Croatia::Invoice.new(
       sequential_number: 123,
       business_location_identifier: "LOC001",
-      register_identifier: "REG001"
+      register_identifier: "1"
     )
 
-    assert_equal "123/LOC001/REG001", invoice.number
+    assert_equal "123/LOC001/1", invoice.number
   end
 
   def test_calculations_with_line_items
-    invoice = Croatia::Invoice.new
+    invoice = Croatia::Invoice.new(
+      business_location_identifier: "LOC1",
+      register_identifier: "1",
+      sequential_number: "1"
+    )
 
     invoice.add_line_item do |item|
       item.description = "Item 1"
@@ -77,7 +90,11 @@ class Croatia::InvoiceTest < Minitest::Test
   end
 
   def test_total_cents
-    invoice = Croatia::Invoice.new
+    invoice = Croatia::Invoice.new(
+      business_location_identifier: "LOC1",
+      register_identifier: "1",
+      sequential_number: "1"
+    )
 
     invoice.add_line_item do |item|
       item.description = "Item"
@@ -91,7 +108,11 @@ class Croatia::InvoiceTest < Minitest::Test
   end
 
   def test_add_line_item_with_object
-    invoice = Croatia::Invoice.new
+    invoice = Croatia::Invoice.new(
+      business_location_identifier: "LOC1",
+      register_identifier: "1",
+      sequential_number: "1"
+    )
     line_item = Croatia::Invoice::LineItem.new(description: "Test item")
 
     result = invoice.add_line_item(line_item)
@@ -102,7 +123,11 @@ class Croatia::InvoiceTest < Minitest::Test
   end
 
   def test_add_line_item_with_block
-    invoice = Croatia::Invoice.new
+    invoice = Croatia::Invoice.new(
+      business_location_identifier: "LOC1",
+      register_identifier: "1",
+      sequential_number: "1"
+    )
 
     result = invoice.add_line_item do |item|
       item.description = "Block item"
@@ -116,7 +141,11 @@ class Croatia::InvoiceTest < Minitest::Test
   end
 
   def test_add_line_item_validation
-    invoice = Croatia::Invoice.new
+    invoice = Croatia::Invoice.new(
+      business_location_identifier: "LOC1",
+      register_identifier: "1",
+      sequential_number: "1"
+    )
 
     assert_raises(ArgumentError, "You must provide a line item or a block") do
       invoice.add_line_item
@@ -124,7 +153,11 @@ class Croatia::InvoiceTest < Minitest::Test
   end
 
   def test_buyer_with_block
-    invoice = Croatia::Invoice.new
+    invoice = Croatia::Invoice.new(
+      business_location_identifier: "LOC1",
+      register_identifier: "1",
+      sequential_number: "1"
+    )
 
     buyer = invoice.buyer do |party|
       party.name = "Test Buyer"
@@ -136,7 +169,11 @@ class Croatia::InvoiceTest < Minitest::Test
   end
 
   def test_buyer_getter
-    invoice = Croatia::Invoice.new
+    invoice = Croatia::Invoice.new(
+      business_location_identifier: "LOC1",
+      register_identifier: "1",
+      sequential_number: "1"
+    )
     party = Croatia::Invoice::Party.new(name: "Test Buyer")
 
     invoice.buyer = party
@@ -145,7 +182,11 @@ class Croatia::InvoiceTest < Minitest::Test
 
 
   def test_seller_with_block
-    invoice = Croatia::Invoice.new
+    invoice = Croatia::Invoice.new(
+      business_location_identifier: "LOC1",
+      register_identifier: "1",
+      sequential_number: "1"
+    )
 
     seller = invoice.seller do |party|
       party.name = "Test Seller"
@@ -157,7 +198,11 @@ class Croatia::InvoiceTest < Minitest::Test
   end
 
   def test_seller_getter
-    invoice = Croatia::Invoice.new
+    invoice = Croatia::Invoice.new(
+      business_location_identifier: "LOC1",
+      register_identifier: "1",
+      sequential_number: "1"
+    )
     party = Croatia::Invoice::Party.new(name: "Test Seller")
 
     invoice.seller = party
@@ -166,7 +211,11 @@ class Croatia::InvoiceTest < Minitest::Test
 
 
   def test_issue_date_with_date
-    invoice = Croatia::Invoice.new
+    invoice = Croatia::Invoice.new(
+      business_location_identifier: "LOC1",
+      register_identifier: "1",
+      sequential_number: "1"
+    )
     date = Date.new(2023, 12, 25)
 
     invoice.issue_date = date
@@ -174,7 +223,11 @@ class Croatia::InvoiceTest < Minitest::Test
   end
 
   def test_issue_date_with_datetime
-    invoice = Croatia::Invoice.new
+    invoice = Croatia::Invoice.new(
+      business_location_identifier: "LOC1",
+      register_identifier: "1",
+      sequential_number: "1"
+    )
     datetime = DateTime.new(2023, 12, 25, 10, 30, 0)
 
     invoice.issue_date = datetime
@@ -182,7 +235,11 @@ class Croatia::InvoiceTest < Minitest::Test
   end
 
   def test_issue_date_with_string
-    invoice = Croatia::Invoice.new
+    invoice = Croatia::Invoice.new(
+      business_location_identifier: "LOC1",
+      register_identifier: "1",
+      sequential_number: "1"
+    )
 
     invoice.issue_date = "2023-12-25"
     assert_instance_of DateTime, invoice.issue_date
@@ -192,14 +249,22 @@ class Croatia::InvoiceTest < Minitest::Test
   end
 
   def test_issue_date_with_nil
-    invoice = Croatia::Invoice.new
+    invoice = Croatia::Invoice.new(
+      business_location_identifier: "LOC1",
+      register_identifier: "1",
+      sequential_number: "1"
+    )
 
     invoice.issue_date = nil
     assert_nil invoice.issue_date
   end
 
   def test_due_date_with_date
-    invoice = Croatia::Invoice.new
+    invoice = Croatia::Invoice.new(
+      business_location_identifier: "LOC1",
+      register_identifier: "1",
+      sequential_number: "1"
+    )
     date = Date.new(2024, 1, 15)
 
     invoice.due_date = date
@@ -207,7 +272,11 @@ class Croatia::InvoiceTest < Minitest::Test
   end
 
   def test_due_date_with_string
-    invoice = Croatia::Invoice.new
+    invoice = Croatia::Invoice.new(
+      business_location_identifier: "LOC1",
+      register_identifier: "1",
+      sequential_number: "1"
+    )
 
     invoice.due_date = "2024-01-15"
     assert_instance_of DateTime, invoice.due_date
@@ -217,14 +286,22 @@ class Croatia::InvoiceTest < Minitest::Test
   end
 
   def test_due_date_with_nil
-    invoice = Croatia::Invoice.new
+    invoice = Croatia::Invoice.new(
+      business_location_identifier: "LOC1",
+      register_identifier: "1",
+      sequential_number: "1"
+    )
 
     invoice.due_date = nil
     assert_nil invoice.due_date
   end
 
   def test_empty_calculations
-    invoice = Croatia::Invoice.new
+    invoice = Croatia::Invoice.new(
+      business_location_identifier: "LOC1",
+      register_identifier: "1",
+      sequential_number: "1"
+    )
 
     assert_equal BigDecimal("0"), invoice.subtotal
     assert_equal BigDecimal("0"), invoice.tax
@@ -233,7 +310,11 @@ class Croatia::InvoiceTest < Minitest::Test
   end
 
   def test_calculations_with_discounts
-    invoice = Croatia::Invoice.new
+    invoice = Croatia::Invoice.new(
+      business_location_identifier: "LOC1",
+      register_identifier: "1",
+      sequential_number: "1"
+    )
 
     invoice.add_line_item do |item|
       item.description = "Discounted item"
@@ -255,7 +336,11 @@ class Croatia::InvoiceTest < Minitest::Test
   end
 
   def test_calculations_with_negative_line_items
-    invoice = Croatia::Invoice.new
+    invoice = Croatia::Invoice.new(
+      business_location_identifier: "LOC1",
+      register_identifier: "1",
+      sequential_number: "1"
+    )
 
     invoice.add_line_item do |item|
       item.description = "Original item"
@@ -284,7 +369,7 @@ class Croatia::InvoiceTest < Minitest::Test
     invoice = Croatia::Invoice.new(
       sequential_number: 1,
       business_location_identifier: "OFFICE",
-      register_identifier: "CASH1",
+      register_identifier: "1",
       currency: "EUR"
     )
 
@@ -324,7 +409,7 @@ class Croatia::InvoiceTest < Minitest::Test
     # Item 2: gross=100.00, discount=15.00, subtotal=85.00, tax=11.05, total=96.05
     # Total: subtotal=136.00, tax=23.80, total=159.80
 
-    assert_equal "1/OFFICE/CASH1", invoice.number
+    assert_equal "1/OFFICE/1", invoice.number
     assert_equal BigDecimal("136.00"), invoice.subtotal
     assert_equal BigDecimal("23.80"), invoice.tax
     assert_equal BigDecimal("159.80"), invoice.total
@@ -335,7 +420,7 @@ class Croatia::InvoiceTest < Minitest::Test
     invoice = Croatia::Invoice.new(
       sequential_number: 1,
       business_location_identifier: "OFFICE",
-      register_identifier: "CASH1",
+      register_identifier: "1",
       currency: "EUR"
     )
 
@@ -377,7 +462,7 @@ class Croatia::InvoiceTest < Minitest::Test
       nil,
       nil,
       nil,
-      "Račun 1/OFFICE/CASH1"
+      "Račun 1/OFFICE/1"
     ].join("\n")
 
     assert_equal expected_data, barcode.data
@@ -387,7 +472,7 @@ class Croatia::InvoiceTest < Minitest::Test
     invoice = Croatia::Invoice.new(
       sequential_number: 1,
       business_location_identifier: "OFFICE",
-      register_identifier: "CASH1",
+      register_identifier: "1",
       currency: "EUR",
       due_date: Date.new(2024, 12, 31)
     )
@@ -440,7 +525,12 @@ class Croatia::InvoiceTest < Minitest::Test
   end
 
   def test_payment_barcode_validation_errors
-    invoice = Croatia::Invoice.new(currency: "INVALID")
+    invoice = Croatia::Invoice.new(
+      currency: "INVALID",
+      business_location_identifier: "LOC1",
+      register_identifier: "1",
+      sequential_number: "1"
+    )
 
     assert_raises(ArgumentError, "Both buyer and seller must be set before generating a payment barcode") do
       invoice.payment_barcode
@@ -480,7 +570,7 @@ class Croatia::InvoiceTest < Minitest::Test
     invoice = Croatia::Invoice.new(
       sequential_number: 1,
       business_location_identifier: "OFFICE",
-      register_identifier: "CASH1",
+      register_identifier: "1",
       currency: "EUR"
     )
 
@@ -521,7 +611,10 @@ class Croatia::InvoiceTest < Minitest::Test
 
     invoice = Croatia::Invoice.new(
       unique_invoice_identifier: "12345678-1234-1234-1234-123456789012",
-      issue_date: DateTime.new(2024, 1, 15, 14, 30, 0)
+      issue_date: DateTime.new(2024, 1, 15, 14, 30, 0),
+      business_location_identifier: "LOC1",
+      register_identifier: "1",
+      sequential_number: "1"
     )
 
     invoice.add_line_item do |item|
@@ -546,7 +639,10 @@ class Croatia::InvoiceTest < Minitest::Test
 
     invoice = Croatia::Invoice.new(
       unique_invoice_identifier: "different-uuid",
-      issue_date: DateTime.new(2024, 1, 15, 14, 30, 0)
+      issue_date: DateTime.new(2024, 1, 15, 14, 30, 0),
+      business_location_identifier: "LOC1",
+      register_identifier: "1",
+      sequential_number: "1"
     )
 
     invoice.add_line_item do |item|
@@ -579,7 +675,7 @@ class Croatia::InvoiceTest < Minitest::Test
       invoice = Croatia::Invoice.new(
         issue_date: DateTime.new(2024, 1, 15, 14, 30, 0),
         business_location_identifier: "LOC001",
-        register_identifier: "REG001",
+        register_identifier: "1",
         sequential_number: 123
       )
 
@@ -612,7 +708,12 @@ class Croatia::InvoiceTest < Minitest::Test
     )
 
     Croatia.with_config(config) do
-      invoice = Croatia::Invoice.new(issue_date: DateTime.new(2024, 1, 15, 14, 30, 0))
+      invoice = Croatia::Invoice.new(
+        issue_date: DateTime.new(2024, 1, 15, 14, 30, 0),
+        business_location_identifier: "LOC1",
+        register_identifier: "1",
+        sequential_number: "1"
+      )
 
       invoice.add_line_item do |item|
         item.description = "Test item"
@@ -633,7 +734,10 @@ class Croatia::InvoiceTest < Minitest::Test
 
     invoice = Croatia::Invoice.new(
       unique_invoice_identifier: "12345678-1234-1234-1234-123456789012",
-      issue_date: DateTime.new(2024, 1, 15, 14, 30, 0)
+      issue_date: DateTime.new(2024, 1, 15, 14, 30, 0),
+      business_location_identifier: "LOC1",
+      register_identifier: "1",
+      sequential_number: "1"
     )
 
     # Add line item with amount that will result in 11 digits when in cents
@@ -657,7 +761,7 @@ class Croatia::InvoiceTest < Minitest::Test
     invoice = Croatia::Invoice.new(
       issue_date: DateTime.new(2024, 1, 15, 14, 30, 0),
       business_location_identifier: "LOC001",
-      register_identifier: "REG001",
+      register_identifier: "1",
       sequential_number: 123
     )
 
