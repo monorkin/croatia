@@ -1,24 +1,23 @@
 # Croatia
 
 Croatia is a gem that contains various utilities for performing Croatia-specific actions:
+
 - [x] PIN _(OIB)_
   - [x] Validation
 - [x] UMCN _(JMBG)_
   - [x] Validation
   - [x] Parsing
   - [x] Generation
+- [ ] Invoices
 - [x] Payment barcodes
   - [x] HUB3 standard 2D barcode generation
-- [ ] Invoices
-  - [x] Payment
-    - [x] 2D barcode generation
-  - [ ] Fiscalization
-    - [x] Issuer protection code generation _(ZKI)_
-    - [x] QR code generation
-    - [x] Reverse _(storno)_
-    - [ ] Invoice registration
-    - [ ] Payment method change
-  - [ ] E-Invoice _(e-Racun)_
+- [ ] Fiscalization _(Fiskalizacija)_
+  - [x] Issuer protection code generation _(ZKI)_
+  - [x] QR code generation
+  - [x] Reverse _(storno)_
+  - [ ] Invoice registration
+  - [ ] Payment method change
+- [ ] E-Invoice _(e-Racun)_
 
 ## Installation
 
@@ -101,46 +100,13 @@ num = Croatia::UMCN.new(
 num.to_s # => "1403988331237"
 ```
 
-### Payment Barcodes
-
-```ruby
-# IMPORTANT: To be able to generate payment barcodes you have to add
-# the "ruby-zint" gem to you Gemfile, or have it installed and required!
-require "ruby-zint"
-
-# Generate a 2D barcode which can be scanned by Croatian banking apps
-# and initiate a payment
-barcode = Croatia::PaymentBarcode.new(
-  description: "Dog walking",
-
-  total_cents: 15_00,
-  currency: "EUR",
-  model: "HR00",
-  reference_number: "202506030001",
-  payment_purpose_code: "OTHR",
-
-  buyer_name: "Hrvoje Horvat",
-  buyer_address: "Ilica 141",
-  buyer_postal_code: 10000,
-  buyer_city: "Zagreb",
-
-  seller_name: "Example Company Ltd.",
-  seller_address: "Example Street 1",
-  seller_postal_code: 2100,
-  seller_city: "Split",
-) # => <Croatia::PaymentBarcode ...>
-
-barcode.to_svg # => "<svg>...</svg>"
-barcode.to_png # => "\b..."
-```
-
 ### Invoices
 
 ```ruby
 # Values can be set during initialization
 invoice = Croatia::Invoice.new(
   sequential_number: 64,
-  register_identifier: "001",
+  register_identifier: "123",
   business_location_identifier: "HQ1",
   sequential_by: :business_location,
   payment_method: :card
@@ -205,13 +171,17 @@ invoice.tax # => BigDecimal("62.50")
 invoice.total # => BigDecimal("262.50")
 invoice.total_cents # => 26250
 
-invoice.number # => "64/HQ1/001"
+invoice.number # => "64/HQ1/123"
 
 ```
 
-#### Payments
+### Payment barcodes
 
 ```ruby
+# IMPORTANT: To be able to generate payment barcodes you have to add
+# the "ruby-zint" gem to you Gemfile, or have it installed and required!
+require "ruby-zint"
+
 # Generate a 2D barcode which can be scanned by Croatian banking apps
 # and initiate a payment
 barcode = invoice.payment_barcode # => <Croatia::PaymentBarcode ...>
@@ -222,9 +192,33 @@ barcode = invoice.payment_barcode(
   model: "HR00",
   reference_number: "202506030001"
 ) # => <Croatia::PaymentBarcode ...>
+
+# Or you can create a payment barcode without an invoice
+barcode = Croatia::PaymentBarcode.new(
+  description: "Dog walking",
+
+  total_cents: 15_00,
+  currency: "EUR",
+  model: "HR00",
+  reference_number: "202506030001",
+  payment_purpose_code: "OTHR",
+
+  buyer_name: "Hrvoje Horvat",
+  buyer_address: "Ilica 141",
+  buyer_postal_code: 10000,
+  buyer_city: "Zagreb",
+
+  seller_name: "Example Company Ltd.",
+  seller_address: "Example Street 1",
+  seller_postal_code: 2100,
+  seller_city: "Split",
+) # => <Croatia::PaymentBarcode ...>
+
+barcode.to_svg # => "<svg>...</svg>"
+barcode.to_png # => "\b..."
 ```
 
-#### Fiscalization
+### Fiscalization
 
 ```ruby
 # Issuer protection code (ZKI) is generated automatically
