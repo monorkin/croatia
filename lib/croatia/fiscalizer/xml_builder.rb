@@ -57,43 +57,24 @@ module Croatia::Fiscalizer::XMLBuilder
           tax_breakdown = invoice.tax_breakdown
 
           if tax_breakdown.key?(:value_added_tax)
-            payload.add_element("tns:Pdv").tap do |vat|
-              tax_breakdown[:value_added_tax].each do |breakdown|
-                vat.add_element("tns:Porez").tap do |tax|
-                  tax.add_element("tns:Stopa").text = (breakdown[:rate] * 100.0).to_f.to_s
-                  tax.add_element("tns:Osnovica").text = breakdown[:base].to_f.to_s
-                  tax.add_element("tns:Iznos").text = breakdown[:tax].to_f.to_s
-                end
-              end
+            payload.add_element("tns:Pdv").tap do |taxes|
+              add_tax_breakdowns(taxes, tax_breakdown[:value_added_tax], name: false)
             end
           end
 
           if tax_breakdown.key?(:consumption_tax)
-            payload.add_element("tns:Pnp").tap do |vat|
-              tax_breakdown[:consumption_tax].each do |breakdown|
-                vat.add_element("tns:Porez").tap do |tax|
-                  tax.add_element("tns:Stopa").text = (breakdown[:rate] * 100.0).to_f.to_s
-                  tax.add_element("tns:Osnovica").text = breakdown[:base].to_f.to_s
-                  tax.add_element("tns:Iznos").text = breakdown[:tax].to_f.to_s
-                end
-              end
+            payload.add_element("tns:Pnp").tap do |taxes|
+              add_tax_breakdowns(taxes, tax_breakdown[:consumption_tax], name: false)
             end
           end
 
           if tax_breakdown.key?(:other)
-            payload.add_element("tns:OstaliPor").tap do |vat|
-              tax_breakdown[:other].each do |breakdown|
-                vat.add_element("tns:Porez").tap do |tax|
-                  tax.add_element("tns:Naziv").text = breakdown[:name]
-                  tax.add_element("tns:Stopa").text = (breakdown[:rate] * 100.0).to_f.to_s
-                  tax.add_element("tns:Osnovica").text = breakdown[:base].to_f.to_s
-                  tax.add_element("tns:Iznos").text = breakdown[:tax].to_f.to_s
-                end
-              end
+            payload.add_element("tns:OstaliPor").tap do |taxes|
+              add_tax_breakdowns(taxes, tax_breakdown[:other], name: true)
             end
           end
 
-          # TODO: Add taxes
+          # TODO: Margins and surcharges
 
           payload.add_element("tns:IznosOslobPdv").text = invoice.vat_exempt_amount.to_f.to_s if invoice.vat_exempt_amount.positive?
           payload.add_element("tns:IznosNePodlOpor").text = invoice.amount_outside_vat_scope.to_f.to_s if invoice.amount_outside_vat_scope.positive?
@@ -105,6 +86,17 @@ module Croatia::Fiscalizer::XMLBuilder
           payload.add_element("tns:NakDost").text = options[:subsequent_delivery] ? "true" : "false"
           payload.add_element("tns:ParagonBrRac").text = options[:paragon_number] if options[:paragon_number]
           payload.add_element("tns:SpecNamj").text = options[:specific_purpose] if options[:specific_purpose]
+        end
+      end
+    end
+
+    def add_tax_breakdowns(taxes, breakdowns, name: false)
+      breakdowns.each do |breakdown|
+        taxes.add_element("tns:Porez").tap do |tax|
+          tax.add_element("tns:Naziv").text = breakdown[:name] if name
+          tax.add_element("tns:Stopa").text = (breakdown[:rate] * 100.0).to_f.to_s
+          tax.add_element("tns:Osnovica").text = breakdown[:base].to_f.to_s
+          tax.add_element("tns:Iznos").text = breakdown[:tax].to_f.to_s
         end
       end
     end
