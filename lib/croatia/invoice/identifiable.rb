@@ -14,11 +14,7 @@
 # format: `sequential_number/business_location_identifier/register_identifier`
 #
 # @example Basic usage
-#   class MyInvoice
-#     include Croatia::Invoice::Identifiable
-#   end
-#
-#   invoice = MyInvoice.new
+#   invoice = Croatia::Invoice.new
 #   invoice.business_location_identifier = "OFFICE01"
 #   invoice.register_identifier = "1"
 #   invoice.sequential_number = "123"

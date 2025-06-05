@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    croatia (0.3.0)
+    croatia (0.4.0)
       openssl
       rexml
       tzinfo
