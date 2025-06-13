@@ -396,4 +396,194 @@ class Croatia::Invoice::LineItemTest < Minitest::Test
     # total: 3.14 + 0.69 = 3.83
     assert_equal BigDecimal("3.83"), line_item.total
   end
+
+  def test_add_surcharge_with_options
+    line_item = Croatia::Invoice::LineItem.new(description: "Test")
+
+    surcharge = line_item.add_surcharge(name: "Environmental fee", amount: 2.50)
+
+    assert_instance_of Croatia::Invoice::Surcharge, surcharge
+    assert_equal "Environmental fee", surcharge.name
+    assert_equal BigDecimal("2.50"), surcharge.amount
+    assert_equal 1, line_item.surcharges.length
+  end
+
+  def test_add_surcharge_with_block
+    line_item = Croatia::Invoice::LineItem.new(description: "Test")
+
+    surcharge = line_item.add_surcharge(name: "Recycling fee", amount: 1.25) do |s|
+      s.amount = 2.50  # Override the amount
+    end
+
+    assert_instance_of Croatia::Invoice::Surcharge, surcharge
+    assert_equal "Recycling fee", surcharge.name
+    assert_equal BigDecimal("2.50"), surcharge.amount
+    assert_equal 1, line_item.surcharges.length
+  end
+
+  def test_add_surcharge_with_object
+    line_item = Croatia::Invoice::LineItem.new(description: "Test")
+    surcharge_obj = Croatia::Invoice::Surcharge.new(name: "Handling fee", amount: 3.75)
+
+    result = line_item.add_surcharge(surcharge_obj)
+
+    assert_equal surcharge_obj, result
+    assert_equal 1, line_item.surcharges.length
+    assert_equal surcharge_obj, line_item.surcharges.values.first
+  end
+
+  def test_remove_surcharge
+    line_item = Croatia::Invoice::LineItem.new(description: "Test")
+    line_item.add_surcharge(name: "Delivery fee", amount: 5.0)
+    line_item.add_surcharge(name: "Service fee", amount: 2.0)
+
+    assert_equal 2, line_item.surcharges.length
+
+    line_item.remove_surcharge("Delivery fee")
+
+    assert_equal 1, line_item.surcharges.length
+    assert_nil line_item.surcharges["Delivery fee"]
+    refute_nil line_item.surcharges["Service fee"]
+  end
+
+  def test_clear_surcharges
+    line_item = Croatia::Invoice::LineItem.new(description: "Test")
+    line_item.add_surcharge(name: "Fee 1", amount: 1.0)
+    line_item.add_surcharge(name: "Fee 2", amount: 2.0)
+
+    assert_equal 2, line_item.surcharges.length
+
+    line_item.clear_surcharges
+
+    assert_equal 0, line_item.surcharges.length
+  end
+
+  def test_surcharge_calculation_single_surcharge
+    line_item = Croatia::Invoice::LineItem.new(
+      description: "Test item",
+      quantity: 2,
+      unit_price: 10.0
+    )
+    line_item.add_surcharge(name: "Environmental fee", amount: 2.50)
+
+    assert_equal BigDecimal("2.50"), line_item.surcharge
+  end
+
+  def test_surcharge_calculation_multiple_surcharges
+    line_item = Croatia::Invoice::LineItem.new(
+      description: "Test item",
+      quantity: 2,
+      unit_price: 10.0
+    )
+    line_item.add_surcharge(name: "Environmental fee", amount: 2.50)
+    line_item.add_surcharge(name: "Handling fee", amount: 1.75)
+
+    assert_equal BigDecimal("4.25"), line_item.surcharge
+  end
+
+  def test_surcharge_calculation_no_surcharges
+    line_item = Croatia::Invoice::LineItem.new(
+      description: "Test item",
+      quantity: 2,
+      unit_price: 10.0
+    )
+
+    assert_equal BigDecimal("0.00"), line_item.surcharge
+  end
+
+  def test_total_calculation_with_surcharges
+    line_item = Croatia::Invoice::LineItem.new(
+      description: "Test item",
+      quantity: 2,
+      unit_price: 10.0
+    )
+    line_item.add_tax(rate: 0.25)
+    line_item.add_surcharge(name: "Environmental fee", amount: 3.0)
+
+    # subtotal: 20.0, tax: 5.0, surcharge: 3.0, total: 28.0
+    assert_equal BigDecimal("20.00"), line_item.subtotal
+    assert_equal BigDecimal("5.00"), line_item.tax
+    assert_equal BigDecimal("3.00"), line_item.surcharge
+    assert_equal BigDecimal("28.00"), line_item.total
+  end
+
+  def test_total_calculation_with_taxes_and_multiple_surcharges
+    line_item = Croatia::Invoice::LineItem.new(
+      description: "Test item",
+      quantity: 1,
+      unit_price: 100.0
+    )
+    line_item.add_tax(rate: 0.25)
+    line_item.add_surcharge(name: "Environmental fee", amount: 5.0)
+    line_item.add_surcharge(name: "Handling fee", amount: 2.50)
+
+    # subtotal: 100.0, tax: 25.0, surcharge: 7.5, total: 132.5
+    assert_equal BigDecimal("100.00"), line_item.subtotal
+    assert_equal BigDecimal("25.00"), line_item.tax
+    assert_equal BigDecimal("7.50"), line_item.surcharge
+    assert_equal BigDecimal("132.50"), line_item.total
+  end
+
+  def test_surcharge_with_discount_and_tax
+    line_item = Croatia::Invoice::LineItem.new(
+      description: "Test item",
+      quantity: 2,
+      unit_price: 10.0
+    )
+    line_item.discount_rate = 0.1
+    line_item.add_tax(rate: 0.25)
+    line_item.add_surcharge(name: "Service fee", amount: 1.5)
+
+    # gross: 20.0, discount: 2.0, subtotal: 18.0
+    # tax: 18.0 * 0.25 = 4.5, surcharge: 1.5
+    # total: 18.0 + 4.5 + 1.5 = 24.0
+    assert_equal BigDecimal("20.00"), line_item.gross
+    assert_equal BigDecimal("2.00"), line_item.discount
+    assert_equal BigDecimal("18.00"), line_item.subtotal
+    assert_equal BigDecimal("4.50"), line_item.tax
+    assert_equal BigDecimal("1.50"), line_item.surcharge
+    assert_equal BigDecimal("24.00"), line_item.total
+  end
+
+  def test_surcharge_with_reverse_line_item
+    line_item = Croatia::Invoice::LineItem.new(
+      description: "Test item",
+      quantity: 2,
+      unit_price: 10.0
+    )
+    line_item.add_tax(rate: 0.25)
+    line_item.add_surcharge(name: "Fee", amount: 3.0)
+    line_item.reverse
+
+    # After reverse, quantity is negative but surcharge remains positive
+    assert_equal BigDecimal("-2"), line_item.quantity
+    assert_equal BigDecimal("-20.00"), line_item.subtotal
+    assert_equal BigDecimal("-5.00"), line_item.tax
+    assert_equal BigDecimal("3.00"), line_item.surcharge  # Surcharge stays positive
+    assert_equal BigDecimal("-22.00"), line_item.total    # -20 + (-5) + 3 = -22
+  end
+
+  def test_surcharge_bigdecimal_precision
+    line_item = Croatia::Invoice::LineItem.new(description: "Test")
+    line_item.add_surcharge(name: "Precision test", amount: 1.234567)
+
+    surcharge = line_item.surcharges["Precision test"]
+    assert_instance_of BigDecimal, surcharge.amount
+    assert_equal BigDecimal("1.234567"), surcharge.amount
+
+    # Test that surcharge total is rounded to 2 decimal places
+    assert_equal BigDecimal("1.23"), line_item.surcharge
+    assert_equal 2, line_item.surcharge.scale
+  end
+
+  def test_initialize_with_surcharges
+    surcharge = Croatia::Invoice::Surcharge.new(name: "Initial fee", amount: 2.0)
+    line_item = Croatia::Invoice::LineItem.new(
+      description: "Test item",
+      surcharges: { surcharge.name => surcharge }
+    )
+
+    assert_equal 1, line_item.surcharges.length
+    assert_equal surcharge, line_item.surcharges["Initial fee"]
+  end
 end

@@ -104,7 +104,7 @@ class Croatia::Invoice::LineItem
   end
 
   def surcharge
-    surcharges.values.sum(&:amount).round(2, BigDecimal::ROUND_HALF_UP)
+    surcharges.values.sum(&:amount).to_d.round(2, BigDecimal::ROUND_HALF_UP)
   end
 
   def total

@@ -10,6 +10,7 @@ class Croatia::Invoice
   autoload :Payable, "croatia/invoice/payable"
   autoload :Party, "croatia/invoice/party"
   autoload :Tax, "croatia/invoice/tax"
+  autoload :Surcharge, "croatia/invoice/surcharge"
   autoload :LineItem, "croatia/invoice/line_item"
 
   include Croatia::Enum
@@ -53,6 +54,10 @@ class Croatia::Invoice
 
   def tax
     line_items.sum(&:tax).to_d
+  end
+
+  def surcharge
+    line_items.sum(&:surcharge).to_d
   end
 
   def total

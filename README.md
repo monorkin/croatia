@@ -16,7 +16,7 @@ Croatia is a gem that contains various utilities for performing Croatia-specific
     - [x] Taxes
       - [x] Types
       - [x] Categories
-    - [ ] Surcharges _(Naknade)_
+    - [x] Surcharges _(Naknade)_
     - [ ] Margins _(Marza)_
 - [x] Payment barcodes
   - [x] HUB3 standard 2D barcode generation
@@ -174,12 +174,26 @@ invoice.add_line_item do |line_item|
 
   # Clear all taxes
   # line_item.clear_taxes
+
+  # Add surcharges (naknade)
+  line_item.add_surcharge(name: "Refundable deposit", amount: 2.50)
+  line_item.add_surcharge do |surcharge|
+    surcharge.name = "Handling fee"
+    surcharge.amount = 1.25
+  end
+
+  # Remove a surcharge
+  # line_item.remove_surcharge("Refundable deposit")
+
+  # Clear all surcharges
+  # line_item.clear_surcharges
 end
 
 invoice.subtotal # => BigDecimal("200.00")
 invoice.tax # => BigDecimal("62.50")
-invoice.total # => BigDecimal("262.50")
-invoice.total_cents # => 26250
+invoice.surcharge # => BigDecimal("3.75")
+invoice.total # => BigDecimal("266.25")
+invoice.total_cents # => 26625
 
 invoice.number # => "64/HQ1/123"
 
