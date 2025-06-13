@@ -75,14 +75,14 @@ Croatia.configure do |config|
 end
 ```
 
-### PINs / OIBs
+### PINs
 
 ```ruby
 Croatia::PIN.valid?("12345678903") # => true
 Croatia::PIN.valid?("12345678900") # => false
 ```
 
-### UMCNs / JMBGs
+### UMCNs
 
 ```ruby
 # Validation
