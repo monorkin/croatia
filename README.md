@@ -13,11 +13,11 @@ Croatia is a gem that contains various utilities for performing Croatia-specific
   - [x] HUB3 standard 2D barcode generation
 - [ ] Fiscalization v2.3 _(Fiskalizacija)_
   - [x] Issuer protection code generation _(ZKI)_
-  - [x] QR code generation
-  - [x] Reverse _(storno)_
   - [ ] Invoices _(racuni)_
+  - [x] Reverse _(storno)_
   - [ ] Supporting documents _(prateci dokumenti - otpremnice, radni nalozi, ponude, ugovori, ...)_
   - [ ] Payment method change
+  - [x] Verification QR code generation
 - [ ] E-Invoice _(e-Racun)_
 
 ## Installation
