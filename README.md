@@ -9,15 +9,14 @@ Croatia is a gem that contains various utilities for performing Croatia-specific
   - [x] Parsing
   - [x] Generation
 - [ ] Invoices
-  - [ ] Line items
-    - [x] Discounts
-      - [x] Percentage
-      - [x] Total
-    - [x] Taxes
-      - [x] Types
-      - [x] Categories
-    - [x] Surcharges _(Naknade)_
-    - [ ] Margins _(Marza)_
+  - [x] Discounts
+    - [x] Percentage
+    - [x] Total
+  - [x] Taxes
+    - [x] Types
+    - [x] Categories
+  - [x] Surcharges _(Naknade)_
+  - [ ] Margins _(Marza)_
 - [x] Payment barcodes
   - [x] HUB3 standard 2D barcode generation
 - [ ] Fiscalization v2.3 _(Fiskalizacija)_
