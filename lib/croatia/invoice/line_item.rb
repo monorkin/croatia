@@ -6,7 +6,7 @@ require "bigdecimal/util"
 class Croatia::Invoice::LineItem
   include Croatia::Enum
 
-  attr_accessor :description, :unit, :taxes
+  attr_accessor :description, :unit, :taxes, :surcharges
   attr_reader :quantity, :unit_price, :discount_rate
 
   def initialize(**options)
@@ -15,6 +15,7 @@ class Croatia::Invoice::LineItem
     self.unit = options[:unit]
     self.unit_price = options.fetch(:unit_price, 0.0)
     self.taxes = options.fetch(:taxes, {})
+    self.surcharges = options.fetch(:surcharges, {})
   end
 
   def quantity=(value)
@@ -102,8 +103,12 @@ class Croatia::Invoice::LineItem
     tax_breakdown.sum { |breakdown| breakdown[:tax] }
   end
 
+  def surcharge
+    surcharges.values.sum(&:amount).round(2, BigDecimal::ROUND_HALF_UP)
+  end
+
   def total
-    (subtotal + tax).round(2, BigDecimal::ROUND_HALF_UP)
+    (subtotal + tax + surcharge).round(2, BigDecimal::ROUND_HALF_UP)
   end
 
   def add_tax(tax = nil, **options, &block)
@@ -131,5 +136,24 @@ class Croatia::Invoice::LineItem
 
   def outside_vat_scope?
     !!taxes[:value_added_tax]&.outside_scope?
+  end
+
+  def add_surcharge(surcharge = nil, **options, &block)
+    if surcharge.nil?
+      surcharge = Croatia::Invoice::Surcharge.new(**options)
+    end
+
+    surcharge.tap(&block) if block_given?
+
+    surcharges[surcharge.name] = surcharge
+    surcharge
+  end
+
+  def remove_surcharge(name)
+    surcharges.delete(name)
+  end
+
+  def clear_surcharges
+    surcharges.clear
   end
 end
