@@ -246,11 +246,13 @@ barcode.to_png # => "\b..."
 
 Make sure you have at least Ruby 3.1 installed. You can check your Ruby version by running `ruby -v`.
 
-After checking out the repo, run `bin/setup` to install dependencies. 
+After checking out the repo, run `bin/setup` to install dependencies.
 
 You can start an interactive shell with the gem loaded into it using `bin/console`.
 
 To run the test suite use `bin/test`.
+
+To lint the code, run `bin/lint`. The linter can also automatically fix some issues, you can run `bin/lint -A` to do so.
 
 To install this gem onto your local machine, run `bundle exec rake install`. 
 
