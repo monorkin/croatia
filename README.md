@@ -174,6 +174,10 @@ invoice.add_line_item do |line_item|
   # Clear all taxes
   # line_item.clear_taxes
 
+  # Add discounts
+  line_item.discount_rate = 0.1  # 10% discount
+  # line_item.discount = 15.0    # Fixed discount amount (takes priority over discount_rate)
+
   # Add surcharges (naknade)
   line_item.add_surcharge(name: "Refundable deposit", amount: 2.50)
   line_item.add_surcharge do |surcharge|
@@ -188,11 +192,11 @@ invoice.add_line_item do |line_item|
   # line_item.clear_surcharges
 end
 
-invoice.subtotal # => BigDecimal("200.00")
-invoice.tax # => BigDecimal("62.50")
+invoice.subtotal # => BigDecimal("180.00") # 200.00 - 20.00 discount (10%)
+invoice.tax # => BigDecimal("59.00") # Tax calculated on discounted amount: 180.00 * 0.25 + 180.00 * 0.05
 invoice.surcharge # => BigDecimal("3.75")
-invoice.total # => BigDecimal("266.25")
-invoice.total_cents # => 26625
+invoice.total # => BigDecimal("242.75")
+invoice.total_cents # => 24275
 
 invoice.number # => "64/HQ1/123"
 
