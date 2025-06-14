@@ -359,4 +359,204 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
       end
     end
   end
+
+  def test_invoice_payment_method_change
+    Timecop.freeze(REFERENCE_TIME) do
+      config = Croatia::Config.new(
+        fiscalization: {
+          certificate: file_fixture("fake_fiskal1.p12").read,
+          password: file_fixture("fake_fiskal1_password.txt").read.strip
+        }
+      )
+
+      Croatia.with_config(config) do
+        invoice = Croatia::Invoice.new(
+          sequential_number: 111,
+          business_location_identifier: "POSL1",
+          register_identifier: "12",
+          issue_date: Time.now - 5,
+          sequential_by: :register,
+          payment_method: :cash  # Original payment method
+        )
+
+        invoice.issuer do |issuer|
+          issuer.pin = "86988477146"
+        end
+
+        invoice.seller do |seller|
+          seller.pin = "05575695113"
+          seller.pays_vat = true
+        end
+
+        invoice.add_line_item do |item|
+          item.description = "Payment method change item"
+          item.quantity = 1
+          item.unit_price = 100.0
+          item.add_tax(type: :value_added_tax, category: :standard)
+        end
+
+        message_id = "c2bb23ad-7044-4b06-b259-04475acecc1e"
+        actual_xml = Croatia::Fiscalizer::XMLBuilder.invoice_payment_method_change(
+          :card,  # New payment method
+          invoice: invoice,
+          message_id: message_id,
+          subsequent_delivery: false
+        )
+
+        expected_xml = <<~XML
+          <tns:PromijeniNacPlacZahtjev xmlns:tns='http://www.apis-it.hr/fin/2012/types/f73' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'>
+            <tns:Zaglavlje>
+              <tns:IdPoruke>c2bb23ad-7044-4b06-b259-04475acecc1e</tns:IdPoruke>
+              <tns:DatumVrijemeSlanja>04.06.2025T07:44:31</tns:DatumVrijemeSlanja>
+            </tns:Zaglavlje>
+            <tns:Racun>
+              <tns:Oib>05575695113</tns:Oib>
+              <tns:USustPdv>true</tns:USustPdv>
+              <tns:DatVrijeme>04.06.2025T07:44:26</tns:DatVrijeme>
+              <tns:OznSlijed>N</tns:OznSlijed>
+              <tns:BrRac>
+                <tns:BrOznRac>111</tns:BrOznRac>
+                <tns:OznPosPr>POSL1</tns:OznPosPr>
+                <tns:OznNapUr>12</tns:OznNapUr>
+              </tns:BrRac>
+              <tns:Pdv>
+                <tns:Porez>
+                  <tns:Stopa>25.00</tns:Stopa>
+                  <tns:Osnovica>100.00</tns:Osnovica>
+                  <tns:Iznos>25.00</tns:Iznos>
+                </tns:Porez>
+              </tns:Pdv>
+              <tns:IznosUkupno>125.00</tns:IznosUkupno>
+              <tns:NacinPlac>G</tns:NacinPlac>
+              <tns:OibOper>86988477146</tns:OibOper>
+              <tns:ZastKod>a844376b0b6c9cba56f85445f4ced6ac</tns:ZastKod>
+              <tns:NakDost>false</tns:NakDost>
+              <tns:PromijenjeniNacinPlac>K</tns:PromijenjeniNacinPlac>
+            </tns:Racun>
+          </tns:PromijeniNacPlacZahtjev>
+        XML
+
+        assert_xml_equal expected_xml, actual_xml
+      end
+    end
+  end
+
+  def test_supporting_document_payment_method_change
+    Timecop.freeze(REFERENCE_TIME) do
+      config = Croatia::Config.new(
+        fiscalization: {
+          certificate: file_fixture("fake_fiskal1.p12").read,
+          password: file_fixture("fake_fiskal1_password.txt").read.strip
+        }
+      )
+
+      Croatia.with_config(config) do
+        invoice = Croatia::Invoice.new(
+          sequential_number: 222,
+          business_location_identifier: "POSL1",
+          register_identifier: "12",
+          issue_date: Time.now - 5,
+          sequential_by: :register,
+          payment_method: :transfer  # Original payment method
+        )
+
+        invoice.issuer do |issuer|
+          issuer.pin = "86988477146"
+        end
+
+        invoice.seller do |seller|
+          seller.pin = "05575695113"
+          seller.pays_vat = true
+        end
+
+        invoice.add_line_item do |item|
+          item.description = "Supporting doc payment change"
+          item.quantity = 2
+          item.unit_price = 50.0
+          item.add_tax(type: :value_added_tax, category: :standard)
+        end
+
+        message_id = "c2bb23ad-7044-4b06-b259-04475acecc1e"
+        actual_xml = Croatia::Fiscalizer::XMLBuilder.supporting_document_payment_method_change(
+          :cash,  # New payment method
+          invoice: invoice,
+          message_id: message_id,
+          unique_identifier: "test-jir-payment-change-123",
+          subsequent_delivery: true
+        )
+
+        expected_xml = <<~XML
+          <tns:PromijeniNacPlacZahtjev xmlns:tns='http://www.apis-it.hr/fin/2012/types/f73' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'>
+            <tns:Zaglavlje>
+              <tns:IdPoruke>c2bb23ad-7044-4b06-b259-04475acecc1e</tns:IdPoruke>
+              <tns:DatumVrijemeSlanja>04.06.2025T07:44:31</tns:DatumVrijemeSlanja>
+            </tns:Zaglavlje>
+            <tns:Racun>
+              <tns:Oib>05575695113</tns:Oib>
+              <tns:USustPdv>true</tns:USustPdv>
+              <tns:DatVrijeme>04.06.2025T07:44:26</tns:DatVrijeme>
+              <tns:OznSlijed>N</tns:OznSlijed>
+              <tns:BrRac>
+                <tns:BrOznRac>222</tns:BrOznRac>
+                <tns:OznPosPr>POSL1</tns:OznPosPr>
+                <tns:OznNapUr>12</tns:OznNapUr>
+              </tns:BrRac>
+              <tns:Pdv>
+                <tns:Porez>
+                  <tns:Stopa>25.00</tns:Stopa>
+                  <tns:Osnovica>100.00</tns:Osnovica>
+                  <tns:Iznos>25.00</tns:Iznos>
+                </tns:Porez>
+              </tns:Pdv>
+              <tns:IznosUkupno>125.00</tns:IznosUkupno>
+              <tns:NacinPlac>T</tns:NacinPlac>
+              <tns:OibOper>86988477146</tns:OibOper>
+              <tns:ZastKod>5dfd19829a93d1cd4faac1b1c0ce6f32</tns:ZastKod>
+              <tns:NakDost>true</tns:NakDost>
+              <tns:PrateciDokument>
+                <tns:JirPD>test-jir-payment-change-123</tns:JirPD>
+              </tns:PrateciDokument>
+              <tns:PromijenjeniNacinPlac>G</tns:PromijenjeniNacinPlac>
+            </tns:Racun>
+          </tns:PromijeniNacPlacZahtjev>
+        XML
+
+        assert_xml_equal expected_xml, actual_xml
+      end
+    end
+  end
+
+  def test_payment_method_change_validation
+    config = Croatia::Config.new(
+      fiscalization: {
+        certificate: file_fixture("fake_fiskal1.p12").read,
+        password: file_fixture("fake_fiskal1_password.txt").read.strip
+      }
+    )
+
+    Croatia.with_config(config) do
+      invoice = Croatia::Invoice.new(
+        sequential_number: 333,
+        business_location_identifier: "POSL1",
+        register_identifier: "12",
+        issue_date: Time.now,
+        sequential_by: :register,
+      )
+
+      invoice.issuer { |i| i.pin = "86988477146" }
+      invoice.seller { |s| s.pin = "05575695113"; s.pays_vat = true }
+      invoice.add_line_item { |i| i.description = "Test"; i.unit_price = 100.0 }
+
+      message_id = "c2bb23ad-7044-4b06-b259-04475acecc1e"
+
+      # Test error when invalid payment method is provided
+      assert_raises(KeyError) do
+        Croatia::Fiscalizer::XMLBuilder.invoice_payment_method_change(
+          :invalid_method,
+          invoice: invoice,
+          message_id: message_id
+        )
+      end
+    end
+  end
 end

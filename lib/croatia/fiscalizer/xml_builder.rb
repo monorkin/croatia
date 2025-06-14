@@ -7,6 +7,7 @@ module Croatia::Fiscalizer::XMLBuilder
   XSI = "http://www.w3.org/2001/XMLSchema-instance"
   INVOICE_ENVELOPE = "RacunZahtjev"
   SUPPORTING_DOCUMENT_ENVELOPE = "RacunPDZahtjev"
+  PAYMENT_METHOD_CAHNGE_ENVELOPE = "PromijeniNacPlacZahtjev"
   SEQUENCE_MARK = {
     register: "N", # N - sequential by register
     business_location: "P" # P - sequential by business location
@@ -26,7 +27,15 @@ module Croatia::Fiscalizer::XMLBuilder
         message_id: message_id,
         timezone: timezone,
         envelope: INVOICE_ENVELOPE,
-        **options.except(:supporting_document)
+        **options
+      )
+    end
+
+    def invoice_payment_method_change(new_payment_method, **options)
+      invoice(
+        new_payment_method: new_payment_method,
+        envelope: PAYMENT_METHOD_CAHNGE_ENVELOPE,
+        **options
       )
     end
 
@@ -40,6 +49,14 @@ module Croatia::Fiscalizer::XMLBuilder
           unique_identifier: unique_identifier,
           issuer_protection_code: issuer_protection_code
         },
+        **options
+      )
+    end
+
+    def supporting_document_payment_method_change(new_payment_method, **options)
+      supporting_document(
+        new_payment_method: new_payment_method,
+        envelope: PAYMENT_METHOD_CAHNGE_ENVELOPE,
         **options
       )
     end
@@ -137,6 +154,10 @@ module Croatia::Fiscalizer::XMLBuilder
 
             if options[:supporting_document]
               add_supporting_document_elements(payload, **options[:supporting_document])
+            end
+
+            if options[:new_payment_method]
+              payload.add_element("tns:PromijenjeniNacinPlac").text = PAYMENT_METHODS.fetch(options[:new_payment_method])
             end
           end
         end
