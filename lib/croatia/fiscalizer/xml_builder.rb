@@ -74,10 +74,13 @@ module Croatia::Fiscalizer::XMLBuilder
             end
           end
 
-          payload.add_element("tns:IznosOslobPdv").text = invoice.vat_exempt_amount.to_f.to_s if invoice.vat_exempt_amount.positive?
-          payload.add_element("tns:IznosNePodlOpor").text = invoice.amount_outside_vat_scope.to_f.to_s if invoice.amount_outside_vat_scope.positive?
+          payload.add_element("tns:IznosOslobPdv").text = format_decimal(invoice.vat_exempt_amount) if invoice.vat_exempt_amount.positive?
 
-          # TODO: Margins
+          if invoice.margin.positive?
+            payload.add_element("tns:IzonsMarza").text = format_decimal(invoice.margin)
+          end
+
+          payload.add_element("tns:IznosNePodlOpor").text = format_decimal(invoice.amount_outside_vat_scope) if invoice.amount_outside_vat_scope.positive?
 
           surcharges = invoice.surcharges
 
@@ -86,13 +89,13 @@ module Croatia::Fiscalizer::XMLBuilder
               surcharges.each do |surcharge|
                 group.add_element("tns:Naknada").tap do |item|
                   item.add_element("tns:NazivN").text = surcharge.name
-                  item.add_element("tns:IznosN").text = surcharge.amount.to_f.to_s
+                  item.add_element("tns:IznosN").text = format_decimal(surcharge.amount)
                 end
               end
             end
           end
 
-          payload.add_element("tns:IznosUkupno").text = invoice.total.to_f.to_s
+          payload.add_element("tns:IznosUkupno").text = format_decimal(invoice.total)
           payload.add_element("tns:NacinPlac").text = PAYMENT_METHODS.fetch(invoice.payment_method)
           payload.add_element("tns:OibOper").text = invoice.issuer.pin
           payload.add_element("tns:ZastKod").text = invoice.issuer_protection_code
@@ -107,11 +110,15 @@ module Croatia::Fiscalizer::XMLBuilder
       breakdowns.each do |breakdown|
         taxes.add_element("tns:Porez").tap do |tax|
           tax.add_element("tns:Naziv").text = breakdown[:name] if name
-          tax.add_element("tns:Stopa").text = (breakdown[:rate] * 100.0).to_f.to_s
-          tax.add_element("tns:Osnovica").text = breakdown[:base].to_f.to_s
-          tax.add_element("tns:Iznos").text = breakdown[:tax].to_f.to_s
+          tax.add_element("tns:Stopa").text = format_decimal(breakdown[:rate] * 100.0)
+          tax.add_element("tns:Osnovica").text = format_decimal(breakdown[:base])
+          tax.add_element("tns:Iznos").text = format_decimal(breakdown[:tax])
         end
       end
+    end
+
+    def format_decimal(value)
+      format("%.2f", value.to_f)
     end
   end
 end

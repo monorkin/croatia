@@ -18,7 +18,13 @@ class Croatia::Invoice::Surcharge
       raise ArgumentError, "Name cannot be nil"
     end
 
-    @name = value.to_s.strip
+    value = value.to_s.strip
+
+    if value.length > 100
+      raise ArgumentError, "Name must not exceed 100 characters"
+    end
+
+    @name = value
   end
 
   def amount=(value)

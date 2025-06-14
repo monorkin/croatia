@@ -51,6 +51,7 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
           item.quantity = 6
           item.unit = "PCS"
           item.unit_price = 2.0
+          item.margin = 8.0
           item.add_tax(type: :value_added_tax, category: :lower_rate)
           item.add_tax(type: :consumption_tax, category: :standard, rate: 0.05)
           item.add_surcharge(name: "Environmental fee", amount: 1.50)
@@ -93,52 +94,53 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
               </tns:BrRac>
               <tns:Pdv>
                 <tns:Porez>
-                  <tns:Stopa>25.0</tns:Stopa>
-                  <tns:Osnovica>20.0</tns:Osnovica>
-                  <tns:Iznos>5.0</tns:Iznos>
+                  <tns:Stopa>25.00</tns:Stopa>
+                  <tns:Osnovica>20.00</tns:Osnovica>
+                  <tns:Iznos>5.00</tns:Iznos>
                 </tns:Porez>
                 <tns:Porez>
-                  <tns:Stopa>13.0</tns:Stopa>
-                  <tns:Osnovica>12.0</tns:Osnovica>
-                  <tns:Iznos>1.56</tns:Iznos>
+                  <tns:Stopa>13.00</tns:Stopa>
+                  <tns:Osnovica>8.00</tns:Osnovica>
+                  <tns:Iznos>1.04</tns:Iznos>
                 </tns:Porez>
                 <tns:Porez>
-                  <tns:Stopa>0.0</tns:Stopa>
-                  <tns:Osnovica>45.0</tns:Osnovica>
-                  <tns:Iznos>0.0</tns:Iznos>
+                  <tns:Stopa>0.00</tns:Stopa>
+                  <tns:Osnovica>45.00</tns:Osnovica>
+                  <tns:Iznos>0.00</tns:Iznos>
                 </tns:Porez>
               </tns:Pdv>
               <tns:Pnp>
                 <tns:Porez>
-                  <tns:Stopa>5.0</tns:Stopa>
-                  <tns:Osnovica>12.0</tns:Osnovica>
-                  <tns:Iznos>0.6</tns:Iznos>
+                  <tns:Stopa>5.00</tns:Stopa>
+                  <tns:Osnovica>8.00</tns:Osnovica>
+                  <tns:Iznos>0.40</tns:Iznos>
                 </tns:Porez>
                 <tns:Porez>
-                  <tns:Stopa>5.0</tns:Stopa>
-                  <tns:Osnovica>45.0</tns:Osnovica>
+                  <tns:Stopa>5.00</tns:Stopa>
+                  <tns:Osnovica>45.00</tns:Osnovica>
                   <tns:Iznos>2.25</tns:Iznos>
                 </tns:Porez>
               </tns:Pnp>
               <tns:OstaliPor>
                 <tns:Porez>
                   <tns:Naziv/>
-                  <tns:Stopa>1.0</tns:Stopa>
-                  <tns:Osnovica>45.0</tns:Osnovica>
+                  <tns:Stopa>1.00</tns:Stopa>
+                  <tns:Osnovica>45.00</tns:Osnovica>
                   <tns:Iznos>0.45</tns:Iznos>
                 </tns:Porez>
               </tns:OstaliPor>
-              <tns:IznosOslobPdv>45.0</tns:IznosOslobPdv>
+              <tns:IznosOslobPdv>45.00</tns:IznosOslobPdv>
+              <tns:IzonsMarza>8.00</tns:IzonsMarza>
               <tns:Naknade>
                 <tns:Naknada>
                   <tns:NazivN>Environmental fee</tns:NazivN>
-                  <tns:IznosN>1.5</tns:IznosN>
+                  <tns:IznosN>1.50</tns:IznosN>
                 </tns:Naknada>
               </tns:Naknade>
-              <tns:IznosUkupno>88.36</tns:IznosUkupno>
+              <tns:IznosUkupno>87.64</tns:IznosUkupno>
               <tns:NacinPlac>K</tns:NacinPlac>
               <tns:OibOper>86988477146</tns:OibOper>
-              <tns:ZastKod>0cd027f64499f3683ff97d1a1b62741f</tns:ZastKod>
+              <tns:ZastKod>7ea181735d8ae4098e2a763c2179c811</tns:ZastKod>
               <tns:NakDost>false</tns:NakDost>
               <tns:ParagonBrRac>123/458/5</tns:ParagonBrRac>
               <tns:SpecNamj>TEST</tns:SpecNamj>
