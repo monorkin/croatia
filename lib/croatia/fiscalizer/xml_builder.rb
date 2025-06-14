@@ -15,7 +15,7 @@ module Croatia::Fiscalizer::XMLBuilder
     cash: "G", # G - gotovina
     card: "K", # K - kartica
     check: "C", # C - ček
-    transfer: "T", # T - prijenos
+    transfer: "T", # T - prijenos / virmansko placanje
     other: "O" # O - ostalo
   }.freeze
 
@@ -158,8 +158,8 @@ module Croatia::Fiscalizer::XMLBuilder
       end
 
       def add_supporting_document_elements(payload, unique_identifier: nil, issuer_protection_code: nil)
-        if unique_identifier && issuer_protection_code
-          raise ArgumentError, "Either unique_identifier or issuer_protection_code must be provided, not both."
+        if unique_identifier.nil? && issuer_protection_code.nil?
+          raise ArgumentError, "Either unique_identifier or issuer_protection_code must be provided"
         end
 
         if unique_identifier && issuer_protection_code
