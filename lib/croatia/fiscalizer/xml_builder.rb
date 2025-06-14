@@ -74,10 +74,23 @@ module Croatia::Fiscalizer::XMLBuilder
             end
           end
 
-          # TODO: Margins and surcharges
-
           payload.add_element("tns:IznosOslobPdv").text = invoice.vat_exempt_amount.to_f.to_s if invoice.vat_exempt_amount.positive?
           payload.add_element("tns:IznosNePodlOpor").text = invoice.amount_outside_vat_scope.to_f.to_s if invoice.amount_outside_vat_scope.positive?
+
+         # TODO: Margins
+
+         surcharges = invoice.surcharges
+
+         if surcharges.any?
+          payload.add_element("tns:Naknade").tap do |group|
+              surcharges.each do |surcharge|
+                group.add_element("tns:Naknada").tap do |item|
+                  item.add_element("tns:NazivN").text = surcharge.name
+                  item.add_element("tns:IznosN").text = surcharge.amount.to_f.to_s
+                end
+              end
+            end
+          end
 
           payload.add_element("tns:IznosUkupno").text = invoice.total.to_f.to_s
           payload.add_element("tns:NacinPlac").text = PAYMENT_METHODS.fetch(invoice.payment_method)

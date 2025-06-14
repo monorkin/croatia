@@ -56,6 +56,17 @@ class Croatia::Invoice
     line_items.sum(&:tax).to_d
   end
 
+  def surcharges
+    line_items
+      .flat_map { |item| item.surcharges.values }
+      .each_with_object({}) do |surcharge, acc|
+        next if surcharge.nil?
+
+        acc[surcharge.name] ||= Surcharge.new(name: surcharge.name, amount: 0.0)
+        acc[surcharge.name].amount += surcharge.amount
+      end.values
+  end
+
   def surcharge
     line_items.sum(&:surcharge).to_d
   end
