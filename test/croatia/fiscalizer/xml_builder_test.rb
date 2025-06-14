@@ -68,7 +68,7 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
         end
 
         message_id = "c2bb23ad-7044-4b06-b259-04475acecc1e"
-        actual_xml = Croatia::Fiscalizer::XMLBuilder.invoice_request(
+        actual_xml = Croatia::Fiscalizer::XMLBuilder.invoice(
           invoice: invoice,
           message_id: message_id,
           subsequent_delivery: false,
