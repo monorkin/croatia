@@ -7,7 +7,7 @@ class Croatia::Invoice::LineItem
   include Croatia::Enum
 
   attr_accessor :description, :unit, :taxes, :surcharges
-  attr_reader :quantity, :unit_price, :discount_rate
+  attr_reader :quantity, :unit_price, :discount_rate, :margin
 
   def initialize(**options)
     self.description = options[:description]
@@ -71,6 +71,19 @@ class Croatia::Invoice::LineItem
     end
   end
 
+  def margin=(value)
+    if margin.nil?
+      @margin = nil
+      return
+    end
+
+    unless value.is_a?(Numeric) && value >= 0
+      raise ArgumentError, "Margin must be a non-negative number"
+    end
+
+    @margin = value.to_d.round(2, BigDecimal::ROUND_HALF_UP)
+  end
+
   def reverse
     self.quantity *= -1
   end
@@ -83,14 +96,19 @@ class Croatia::Invoice::LineItem
     gross - discount
   end
 
+  def taxable_base
+    margin ? margin : subtotal
+  end
+
   def tax_breakdown
     taxes.filter_map do |type, tax|
       next if tax.nil?
 
       {
         rate: tax.rate,
-        base: subtotal,
-        tax: (subtotal * tax.rate).round(2, BigDecimal::ROUND_HALF_UP),
+        base: taxable_base,
+        margin: margin,
+        tax: (taxable_base * tax.rate).round(2, BigDecimal::ROUND_HALF_UP),
         taxable: !tax.exempt?,
         name: tax.other? ? tax.name : tax.type,
         type: tax.type,

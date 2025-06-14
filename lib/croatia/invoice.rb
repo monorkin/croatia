@@ -71,6 +71,10 @@ class Croatia::Invoice
     line_items.sum(&:surcharge).to_d
   end
 
+  def margin
+    line_items.sum(&:margin).to_d
+  end
+
   def total
     line_items.sum(&:total).to_d
   end
