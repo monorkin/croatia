@@ -8,6 +8,7 @@ module Croatia::Fiscalizer::XMLBuilder
   INVOICE_ENVELOPE = "RacunZahtjev"
   SUPPORTING_DOCUMENT_ENVELOPE = "RacunPDZahtjev"
   PAYMENT_METHOD_CAHNGE_ENVELOPE = "PromijeniNacPlacZahtjev"
+  VERIFY_ENVELOPE = "ProvjeraZahtjev"
   SEQUENCE_MARK = {
     register: "N", # N - sequential by register
     business_location: "P" # P - sequential by business location
@@ -57,6 +58,16 @@ module Croatia::Fiscalizer::XMLBuilder
       supporting_document(
         new_payment_method: new_payment_method,
         envelope: PAYMENT_METHOD_CAHNGE_ENVELOPE,
+        **options
+      )
+    end
+
+    def verify(invoice:, message_id:, timezone: Croatia::Fiscalizer::TZ, **options)
+      build(
+        invoice: invoice,
+        message_id: message_id,
+        timezone: timezone,
+        envelope: VERIFY_ENVELOPE,
         **options
       )
     end
