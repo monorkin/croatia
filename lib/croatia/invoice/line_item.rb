@@ -72,7 +72,7 @@ class Croatia::Invoice::LineItem
   end
 
   def margin=(value)
-    if margin.nil?
+    if value.nil?
       @margin = nil
       return
     end

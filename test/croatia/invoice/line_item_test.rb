@@ -586,4 +586,193 @@ class Croatia::Invoice::LineItemTest < Minitest::Test
     assert_equal 1, line_item.surcharges.length
     assert_equal surcharge, line_item.surcharges["Initial fee"]
   end
+
+  def test_margin_setter
+    line_item = Croatia::Invoice::LineItem.new(description: "Test")
+    line_item.margin = 15.50
+
+    assert_equal BigDecimal("15.50"), line_item.margin
+  end
+
+  def test_margin_setter_with_string_should_fail
+    line_item = Croatia::Invoice::LineItem.new(description: "Test")
+
+    assert_raises(ArgumentError, "Margin must be a non-negative number") do
+      line_item.margin = "12.75"
+    end
+  end
+
+  def test_margin_setter_with_integer
+    line_item = Croatia::Invoice::LineItem.new(description: "Test")
+    line_item.margin = 20
+
+    assert_equal BigDecimal("20.00"), line_item.margin
+  end
+
+  def test_margin_setter_nil
+    line_item = Croatia::Invoice::LineItem.new(description: "Test")
+    line_item.margin = 10.0
+    line_item.margin = nil
+
+    assert_nil line_item.margin
+  end
+
+  def test_margin_validation_negative
+    line_item = Croatia::Invoice::LineItem.new(description: "Test")
+
+    assert_raises(ArgumentError, "Margin must be a non-negative number") do
+      line_item.margin = -5.0
+    end
+  end
+
+  def test_margin_validation_invalid_type
+    line_item = Croatia::Invoice::LineItem.new(description: "Test")
+
+    assert_raises(ArgumentError, "Margin must be a non-negative number") do
+      line_item.margin = "invalid"
+    end
+  end
+
+  def test_margin_rounding
+    line_item = Croatia::Invoice::LineItem.new(description: "Test")
+    line_item.margin = 15.126
+
+    assert_equal BigDecimal("15.13"), line_item.margin
+    assert_equal 2, line_item.margin.scale
+  end
+
+  def test_taxable_base_without_margin
+    line_item = Croatia::Invoice::LineItem.new(
+      description: "Test item",
+      quantity: 2,
+      unit_price: 10.0
+    )
+    line_item.discount_rate = 0.1
+
+    # Without margin, taxable_base should equal subtotal
+    assert_equal BigDecimal("18.00"), line_item.subtotal  # 20.0 - 2.0 discount
+    assert_equal BigDecimal("18.00"), line_item.taxable_base
+  end
+
+  def test_taxable_base_with_margin
+    line_item = Croatia::Invoice::LineItem.new(
+      description: "Test item",
+      quantity: 2,
+      unit_price: 10.0
+    )
+    line_item.discount_rate = 0.1
+    line_item.margin = 15.0
+
+    # With margin, taxable_base should equal margin, not subtotal
+    assert_equal BigDecimal("18.00"), line_item.subtotal  # 20.0 - 2.0 discount
+    assert_equal BigDecimal("15.00"), line_item.taxable_base
+  end
+
+  def test_tax_calculation_with_margin
+    line_item = Croatia::Invoice::LineItem.new(
+      description: "Test item",
+      quantity: 2,
+      unit_price: 10.0
+    )
+    line_item.margin = 12.0
+    line_item.add_tax(rate: 0.25)
+
+    # Tax should be calculated on margin (12.0), not subtotal (20.0)
+    assert_equal BigDecimal("20.00"), line_item.subtotal
+    assert_equal BigDecimal("12.00"), line_item.taxable_base
+    assert_equal BigDecimal("3.00"), line_item.tax  # 12.0 * 0.25
+  end
+
+  def test_tax_calculation_without_margin
+    line_item = Croatia::Invoice::LineItem.new(
+      description: "Test item",
+      quantity: 2,
+      unit_price: 10.0
+    )
+    line_item.add_tax(rate: 0.25)
+
+    # Tax should be calculated on subtotal when no margin is set
+    assert_equal BigDecimal("20.00"), line_item.subtotal
+    assert_equal BigDecimal("20.00"), line_item.taxable_base
+    assert_equal BigDecimal("5.00"), line_item.tax  # 20.0 * 0.25
+  end
+
+  def test_tax_breakdown_includes_margin_info
+    line_item = Croatia::Invoice::LineItem.new(
+      description: "Test item",
+      quantity: 1,
+      unit_price: 100.0
+    )
+    line_item.margin = 25.0
+    line_item.add_tax(type: :value_added_tax, category: :standard, rate: 0.25)
+
+    breakdown = line_item.tax_breakdown.first
+
+    assert_equal BigDecimal("0.25"), breakdown[:rate]
+    assert_equal BigDecimal("25.00"), breakdown[:base]  # Should be margin
+    assert_equal BigDecimal("25.00"), breakdown[:margin]
+    assert_equal BigDecimal("6.25"), breakdown[:tax]  # 25.0 * 0.25
+    assert_equal :value_added_tax, breakdown[:type]
+    assert_equal :standard, breakdown[:category]
+  end
+
+  def test_tax_breakdown_without_margin
+    line_item = Croatia::Invoice::LineItem.new(
+      description: "Test item",
+      quantity: 1,
+      unit_price: 100.0
+    )
+    line_item.add_tax(type: :value_added_tax, category: :standard, rate: 0.25)
+
+    breakdown = line_item.tax_breakdown.first
+
+    assert_equal BigDecimal("0.25"), breakdown[:rate]
+    assert_equal BigDecimal("100.00"), breakdown[:base]  # Should be subtotal
+    assert_nil breakdown[:margin]
+    assert_equal BigDecimal("25.00"), breakdown[:tax]  # 100.0 * 0.25
+  end
+
+  def test_total_calculation_with_margin_affects_tax_only
+    line_item = Croatia::Invoice::LineItem.new(
+      description: "Test item",
+      quantity: 2,
+      unit_price: 10.0
+    )
+    line_item.margin = 5.0
+    line_item.add_tax(rate: 0.25)
+    line_item.add_surcharge(name: "Fee", amount: 2.0)
+
+    # Total = subtotal + tax (calculated on margin) + surcharge
+    assert_equal BigDecimal("20.00"), line_item.subtotal
+    assert_equal BigDecimal("1.25"), line_item.tax  # 5.0 * 0.25 (margin-based)
+    assert_equal BigDecimal("2.00"), line_item.surcharge
+    assert_equal BigDecimal("23.25"), line_item.total  # 20.0 + 1.25 + 2.0
+  end
+
+  def test_margin_with_discount_and_complex_taxes
+    line_item = Croatia::Invoice::LineItem.new(
+      description: "Complex item",
+      quantity: 3,
+      unit_price: 20.0
+    )
+    line_item.discount_rate = 0.1  # 10% discount
+    line_item.margin = 30.0
+    line_item.add_tax(type: :value_added_tax, category: :standard, rate: 0.25)
+    line_item.add_tax(type: :consumption_tax, category: :standard, rate: 0.05)
+
+    # Calculations:
+    # gross: 60.0, discount: 6.0, subtotal: 54.0
+    # margin: 30.0 (overrides subtotal for tax calculation)
+    # VAT: 30.0 * 0.25 = 7.5
+    # Consumption tax: 30.0 * 0.05 = 1.5
+    # Total tax: 9.0
+    # Total: 54.0 + 9.0 = 63.0
+
+    assert_equal BigDecimal("60.00"), line_item.gross
+    assert_equal BigDecimal("6.00"), line_item.discount
+    assert_equal BigDecimal("54.00"), line_item.subtotal
+    assert_equal BigDecimal("30.00"), line_item.taxable_base
+    assert_equal BigDecimal("9.00"), line_item.tax
+    assert_equal BigDecimal("63.00"), line_item.total
+  end
 end

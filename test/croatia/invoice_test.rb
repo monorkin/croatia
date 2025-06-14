@@ -416,6 +416,190 @@ class Croatia::InvoiceTest < Minitest::Test
     assert_equal 15980, invoice.total_cents
   end
 
+  def test_surcharge_calculations
+    invoice = Croatia::Invoice.new(
+      business_location_identifier: "LOC1",
+      register_identifier: "1",
+      sequential_number: "1"
+    )
+
+    # Add line item with surcharges
+    invoice.add_line_item do |item|
+      item.description = "Item 1"
+      item.quantity = 2
+      item.unit_price = 10.0
+      item.add_tax(rate: 0.25)
+      item.add_surcharge(name: "Environmental fee", amount: 1.50)
+      item.add_surcharge(name: "Handling fee", amount: 0.75)
+    end
+
+    # Add another line item with different surcharges
+    invoice.add_line_item do |item|
+      item.description = "Item 2"
+      item.quantity = 1
+      item.unit_price = 30.0
+      item.add_tax(rate: 0.25)
+      item.add_surcharge(name: "Environmental fee", amount: 2.25)  # Same name, should aggregate
+      item.add_surcharge(name: "Service fee", amount: 1.00)
+    end
+
+    # Line Item 1: subtotal=20.00, tax=5.00, surcharges=2.25, total=27.25
+    # Line Item 2: subtotal=30.00, tax=7.50, surcharges=3.25, total=40.75
+    assert_equal BigDecimal("50.00"), invoice.subtotal
+    assert_equal BigDecimal("12.50"), invoice.tax
+    assert_equal BigDecimal("5.50"), invoice.surcharge  # 2.25 + 3.25
+    assert_equal BigDecimal("68.00"), invoice.total
+
+    # Test surcharges aggregation
+    surcharges = invoice.surcharges
+    assert_equal 3, surcharges.length
+
+    environmental_fee = surcharges.find { |s| s.name == "Environmental fee" }
+    handling_fee = surcharges.find { |s| s.name == "Handling fee" }
+    service_fee = surcharges.find { |s| s.name == "Service fee" }
+
+    assert_equal BigDecimal("3.75"), environmental_fee.amount  # 1.50 + 2.25
+    assert_equal BigDecimal("0.75"), handling_fee.amount
+    assert_equal BigDecimal("1.00"), service_fee.amount
+  end
+
+  def test_surcharge_calculations_no_surcharges
+    invoice = Croatia::Invoice.new(
+      business_location_identifier: "LOC1",
+      register_identifier: "1",
+      sequential_number: "1"
+    )
+
+    invoice.add_line_item do |item|
+      item.description = "Item 1"
+      item.quantity = 2
+      item.unit_price = 10.0
+      item.add_tax(rate: 0.25)
+    end
+
+    assert_equal BigDecimal("0.00"), invoice.surcharge
+    assert_equal [], invoice.surcharges
+    assert_equal BigDecimal("25.00"), invoice.total  # 20.00 subtotal + 5.00 tax + 0.00 surcharge
+  end
+
+  def test_mixed_surcharge_calculations
+    invoice = Croatia::Invoice.new(
+      business_location_identifier: "LOC1",
+      register_identifier: "1",
+      sequential_number: "1"
+    )
+
+    # Line item WITH surcharges
+    invoice.add_line_item do |item|
+      item.description = "Item with surcharges"
+      item.quantity = 1
+      item.unit_price = 20.0
+      item.add_tax(rate: 0.25)
+      item.add_surcharge(name: "Environmental fee", amount: 1.50)
+      item.add_surcharge(name: "Handling fee", amount: 0.50)
+    end
+
+    # Line item WITHOUT surcharges
+    invoice.add_line_item do |item|
+      item.description = "Item without surcharges"
+      item.quantity = 2
+      item.unit_price = 15.0
+      item.add_tax(rate: 0.25)
+      # No surcharges added
+    end
+
+    # Another line item WITH surcharges
+    invoice.add_line_item do |item|
+      item.description = "Another item with surcharges"
+      item.quantity = 1
+      item.unit_price = 10.0
+      item.add_tax(rate: 0.25)
+      item.add_surcharge(name: "Environmental fee", amount: 1.00)  # Same name as first item
+    end
+
+    # Line item calculations:
+    # Item 1: subtotal=20.00, tax=5.00, surcharges=2.00, total=27.00
+    # Item 2: subtotal=30.00, tax=7.50, surcharges=0.00, total=37.50
+    # Item 3: subtotal=10.00, tax=2.50, surcharges=1.00, total=13.50
+    # Invoice totals: subtotal=60.00, tax=15.00, surcharges=3.00, total=78.00
+
+    assert_equal BigDecimal("60.00"), invoice.subtotal
+    assert_equal BigDecimal("15.00"), invoice.tax
+    assert_equal BigDecimal("3.00"), invoice.surcharge  # 2.00 + 0.00 + 1.00
+    assert_equal BigDecimal("78.00"), invoice.total
+
+    # Test aggregated surcharges
+    surcharges = invoice.surcharges
+    assert_equal 2, surcharges.length
+
+    environmental_fee = surcharges.find { |s| s.name == "Environmental fee" }
+    handling_fee = surcharges.find { |s| s.name == "Handling fee" }
+
+    assert_equal BigDecimal("2.50"), environmental_fee.amount  # 1.50 + 1.00
+    assert_equal BigDecimal("0.50"), handling_fee.amount
+  end
+
+  def test_margin_calculations
+    invoice = Croatia::Invoice.new(
+      business_location_identifier: "LOC1",
+      register_identifier: "1",
+      sequential_number: "1"
+    )
+
+    # Add line item with margin
+    invoice.add_line_item do |item|
+      item.description = "Item 1"
+      item.quantity = 2
+      item.unit_price = 10.0
+      item.margin = 15.0
+      item.add_tax(rate: 0.25)
+    end
+
+    # Add line item without margin
+    invoice.add_line_item do |item|
+      item.description = "Item 2"
+      item.quantity = 1
+      item.unit_price = 30.0
+      item.add_tax(rate: 0.25)
+    end
+
+    # Add another line item with margin
+    invoice.add_line_item do |item|
+      item.description = "Item 3"
+      item.quantity = 1
+      item.unit_price = 20.0
+      item.margin = 25.0
+      item.add_tax(rate: 0.25)
+    end
+
+    # Line Item 1: subtotal=20.00, margin=15.00, tax=3.75 (15.00 * 0.25), total=23.75
+    # Line Item 2: subtotal=30.00, margin=0.00, tax=7.50 (30.00 * 0.25), total=37.50
+    # Line Item 3: subtotal=20.00, margin=25.00, tax=6.25 (25.00 * 0.25), total=26.25
+
+    assert_equal BigDecimal("70.00"), invoice.subtotal  # 20.00 + 30.00 + 20.00
+    assert_equal BigDecimal("40.00"), invoice.margin    # 15.00 + 0.00 + 25.00
+    assert_equal BigDecimal("17.50"), invoice.tax       # 3.75 + 7.50 + 6.25
+    assert_equal BigDecimal("87.50"), invoice.total     # 23.75 + 37.50 + 26.25
+  end
+
+  def test_margin_calculations_no_margins
+    invoice = Croatia::Invoice.new(
+      business_location_identifier: "LOC1",
+      register_identifier: "1",
+      sequential_number: "1"
+    )
+
+    invoice.add_line_item do |item|
+      item.description = "Item 1"
+      item.quantity = 2
+      item.unit_price = 10.0
+      item.add_tax(rate: 0.25)
+    end
+
+    assert_equal BigDecimal("0.00"), invoice.margin
+    assert_equal BigDecimal("25.00"), invoice.total  # 20.00 subtotal + 5.00 tax
+  end
+
   def test_payment_barcode_with_defaults
     invoice = Croatia::Invoice.new(
       sequential_number: 1,

@@ -16,7 +16,7 @@ Croatia is a gem that contains various utilities for performing Croatia-specific
     - [x] Types
     - [x] Categories
   - [x] Surcharges _(Naknade)_
-  - [ ] Margins _(Marza)_
+  - [x] Margins _(Marza)_
 - [x] Payment barcodes
   - [x] HUB3 standard 2D barcode generation
 - [ ] Fiscalization v2.3 _(Fiskalizacija)_
@@ -190,13 +190,17 @@ invoice.add_line_item do |line_item|
 
   # Clear all surcharges
   # line_item.clear_surcharges
+
+  # Add margin (affects tax calculation base)
+  line_item.margin = 15.0  # Tax will be calculated on margin instead of subtotal
 end
 
 invoice.subtotal # => BigDecimal("180.00") # 200.00 - 20.00 discount (10%)
-invoice.tax # => BigDecimal("59.00") # Tax calculated on discounted amount: 180.00 * 0.25 + 180.00 * 0.05
+invoice.tax # => BigDecimal("4.50") # Tax calculated on margin: 15.00 * 0.25 + 15.00 * 0.05
 invoice.surcharge # => BigDecimal("3.75")
-invoice.total # => BigDecimal("242.75")
-invoice.total_cents # => 24275
+invoice.margin # => BigDecimal("15.00")
+invoice.total # => BigDecimal("188.25")
+invoice.total_cents # => 18825
 
 invoice.number # => "64/HQ1/123"
 

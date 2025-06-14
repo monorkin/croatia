@@ -72,7 +72,7 @@ class Croatia::Invoice
   end
 
   def margin
-    line_items.sum(&:margin).to_d
+    line_items.sum { |item| item.margin || 0 }.to_d
   end
 
   def total
