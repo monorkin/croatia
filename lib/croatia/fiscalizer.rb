@@ -73,21 +73,37 @@ class Croatia::Fiscalizer
   private
 
     def load_certificate(cert, password)
-      if cert.is_a?(OpenSSL::PKCS12)
-        cert.key
-      elsif cert.is_a?(OpenSSL::PKey::PKey)
+      case cert
+      in OpenSSL::PKCS12
         cert
-      else
-        begin
-          cert = File.read(cert) if cert.respond_to?(:to_s) && File.exist?(cert.to_s)
-        rescue ArgumentError
+      in String if is_a_file_path?(cert)
+        OpenSSL::PKCS12.new(File.read(cert), password)
+      in String
+        OpenSSL::PKCS12.new(cert, password)
+      in { private_key: String, public_certificate: String, **rest }
+        private_key_content = is_a_file_path?(cert[:private_key]) ? File.read(cert[:private_key]) : cert[:private_key]
+        certificate_content = is_a_file_path?(cert[:public_certificate]) ? File.read(cert[:public_certificate]) : cert[:public_certificate]
+
+        private_key = OpenSSL::PKey::RSA.new(private_key_content)
+        certificate = OpenSSL::X509::Certificate.new(certificate_content)
+
+        ca_chain = rest[:ca_chain] # may be nil or missing
+        ca_certs = if ca_chain
+          ca_chain_content = is_a_file_path?(ca_chain) ? File.read(ca_chain) : ca_chain
+          [ OpenSSL::X509::Certificate.new(ca_chain_content) ]
+        else
+          nil
         end
 
-        begin
-          OpenSSL::PKey.read(cert)
-        rescue OpenSSL::PKey::PKeyError
-          OpenSSL::PKCS12.new(cert, password).key
-        end
+        OpenSSL::PKCS12.create(password, "FISKAL1", private_key, certificate, ca_certs)
+      else
+        raise ArgumentError, "Invalid certificate format"
       end
+    end
+
+    def is_a_file_path?(path)
+      File.exist?(path) && File.file?(path) && File.readable?(path)
+    rescue ArgumentError
+      false
     end
 end
