@@ -12,18 +12,18 @@ class Croatia::Fiscalizer
   TZ = TZInfo::Timezone.get("Europe/Zagreb")
   QR_CODE_BASE_URL = "https://porezna.gov.hr/rn"
 
-  attr_reader :certificate
+  attr_reader :credential
 
-  def initialize(certificate: nil, password: nil)
-    certificate ||= Croatia.config.fiscalization[:certificate]
+  def initialize(credential: nil, password: nil)
+    credential ||= Croatia.config.fiscalization[:credential]
     password ||= Croatia.config.fiscalization[:password]
 
-    @certificate = load_certificate(certificate, password)
+    @credential = load_certificate(credential, password)
   end
 
   def fiscalize(invoice:, message_id: SecureRandom.uuid)
     document = XMLBuilder.invoice(invoice: invoice, message_id: message_id, timezone: TZ)
-    document = XMLBuilder.sign(document: document, certificate: certificate)
+    document = XMLBuilder.sign(document: document, certificate: credential)
     raise NotImplementedError, "Fiscalization XML generation is not implemented yet"
   end
 
@@ -37,7 +37,7 @@ class Croatia::Fiscalizer
     buffer << invoice.total.to_f
 
     digest = OpenSSL::Digest::SHA1.new
-    signature = certificate.sign(digest, buffer.join)
+    signature = credential.key.sign(digest, buffer.join)
 
     Digest::MD5.hexdigest(signature).downcase
   end
@@ -72,17 +72,17 @@ class Croatia::Fiscalizer
 
   private
 
-    def load_certificate(cert, password)
-      case cert
+    def load_certificate(credential, password)
+      case credential
       in OpenSSL::PKCS12
-        cert
-      in String if is_a_file_path?(cert)
-        OpenSSL::PKCS12.new(File.read(cert), password)
+        credential
+      in String if is_a_file_path?(credential)
+        OpenSSL::PKCS12.new(File.read(credential), password)
       in String
-        OpenSSL::PKCS12.new(cert, password)
+        OpenSSL::PKCS12.new(credential, password)
       in { private_key: String, public_certificate: String, **rest }
-        private_key_content = is_a_file_path?(cert[:private_key]) ? File.read(cert[:private_key]) : cert[:private_key]
-        certificate_content = is_a_file_path?(cert[:public_certificate]) ? File.read(cert[:public_certificate]) : cert[:public_certificate]
+        private_key_content = is_a_file_path?(credential[:private_key]) ? File.read(credential[:private_key]) : credential[:private_key]
+        certificate_content = is_a_file_path?(credential[:public_certificate]) ? File.read(credential[:public_certificate]) : credential[:public_certificate]
 
         private_key = OpenSSL::PKey::RSA.new(private_key_content)
         certificate = OpenSSL::X509::Certificate.new(certificate_content)

@@ -14,7 +14,7 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
     Timecop.freeze(REFERENCE_TIME) do
       config = Croatia::Config.new(
         fiscalization: {
-          certificate: file_fixture("fake_fiskal1.p12").read,
+          credential: file_fixture("fake_fiskal1.p12").read,
           password: file_fixture("fake_fiskal1_password.txt").read.strip
         }
       )
@@ -158,7 +158,7 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
     Timecop.freeze(REFERENCE_TIME) do
       config = Croatia::Config.new(
         fiscalization: {
-          certificate: file_fixture("fake_fiskal1.p12").read,
+          credential: file_fixture("fake_fiskal1.p12").read,
           password: file_fixture("fake_fiskal1_password.txt").read.strip
         }
       )
@@ -240,7 +240,7 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
     Timecop.freeze(REFERENCE_TIME) do
       config = Croatia::Config.new(
         fiscalization: {
-          certificate: file_fixture("fake_fiskal1.p12").read,
+          credential: file_fixture("fake_fiskal1.p12").read,
           password: file_fixture("fake_fiskal1_password.txt").read.strip
         }
       )
@@ -321,7 +321,7 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
   def test_supporting_document_validation_errors
     config = Croatia::Config.new(
       fiscalization: {
-        certificate: file_fixture("fake_fiskal1.p12").read,
+        credential: file_fixture("fake_fiskal1.p12").read,
         password: file_fixture("fake_fiskal1_password.txt").read.strip
       }
     )
@@ -365,7 +365,7 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
     Timecop.freeze(REFERENCE_TIME) do
       config = Croatia::Config.new(
         fiscalization: {
-          certificate: file_fixture("fake_fiskal1.p12").read,
+          credential: file_fixture("fake_fiskal1.p12").read,
           password: file_fixture("fake_fiskal1_password.txt").read.strip
         }
       )
@@ -446,7 +446,7 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
     Timecop.freeze(REFERENCE_TIME) do
       config = Croatia::Config.new(
         fiscalization: {
-          certificate: file_fixture("fake_fiskal1.p12").read,
+          credential: file_fixture("fake_fiskal1.p12").read,
           password: file_fixture("fake_fiskal1_password.txt").read.strip
         }
       )
@@ -530,7 +530,7 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
   def test_payment_method_change_validation
     config = Croatia::Config.new(
       fiscalization: {
-        certificate: file_fixture("fake_fiskal1.p12").read,
+        credential: file_fixture("fake_fiskal1.p12").read,
         password: file_fixture("fake_fiskal1_password.txt").read.strip
       }
     )
@@ -565,7 +565,7 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
     Timecop.freeze(REFERENCE_TIME) do
       config = Croatia::Config.new(
         fiscalization: {
-          certificate: file_fixture("fake_fiskal1.p12").read,
+          credential: file_fixture("fake_fiskal1.p12").read,
           password: file_fixture("fake_fiskal1_password.txt").read.strip
         }
       )
@@ -731,7 +731,7 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
     Timecop.freeze(REFERENCE_TIME) do
       config = Croatia::Config.new(
         fiscalization: {
-          certificate: file_fixture("fake_fiskal1.p12").read,
+          credential: file_fixture("fake_fiskal1.p12").read,
           password: file_fixture("fake_fiskal1_password.txt").read.strip
         }
       )

@@ -808,7 +808,7 @@ class Croatia::InvoiceTest < Minitest::Test
     end
 
     qr_code = invoice.fiscalization_qr_code(
-      certificate: cert_data[:p12],
+      credential: cert_data[:p12],
       password: cert_data[:password]
     )
 
@@ -837,7 +837,7 @@ class Croatia::InvoiceTest < Minitest::Test
 
     # Test with different unique identifier on the invoice
     qr_code = invoice.fiscalization_qr_code(
-      certificate: cert_data[:p12],
+      credential: cert_data[:p12],
       password: cert_data[:password]
     )
 
@@ -850,7 +850,7 @@ class Croatia::InvoiceTest < Minitest::Test
 
     config = Croatia::Config.new(
       fiscalization: {
-        certificate: cert_data[:p12],
+        credential: cert_data[:p12],
         password: cert_data[:password]
       }
     )
@@ -886,7 +886,7 @@ class Croatia::InvoiceTest < Minitest::Test
 
     config = Croatia::Config.new(
       fiscalization: {
-        certificate: cert_data[:p12],
+        credential: cert_data[:p12],
         password: cert_data[:password]
       }
     )
@@ -966,7 +966,7 @@ class Croatia::InvoiceTest < Minitest::Test
 
     # The Fiscalizer requires a certificate parameter
     protection_code = invoice.issuer_protection_code(
-      certificate: cert_data[:p12],
+      credential: cert_data[:p12],
       password: cert_data[:password]
     )
 
