@@ -75,12 +75,7 @@ module Croatia::Fiscalizer::XMLBuilder
       )
     end
 
-    def echo(message:)
-      # TODO: Implement echo message
-      message
-    end
-
-    def sign(document:, certificate:)
+    def sign(document:, credential:)
       id = document.root.attributes["Id"]
 
       if id.nil? || id.empty?
@@ -115,10 +110,10 @@ module Croatia::Fiscalizer::XMLBuilder
         false
       )
 
-      signature_value = Base64.strict_encode64(certificate.key.sign(OpenSSL::Digest::SHA1.new, canonicalized_signed_info))
-      encoded_certificate = Base64.strict_encode64(certificate.certificate.to_der).scan(/.{1,64}/).join("\n")
-      issuer_name = certificate.certificate.issuer.to_s(OpenSSL::X509::Name::RFC2253)
-      serial_number = certificate.certificate.serial.to_i
+      signature_value = Base64.strict_encode64(credential.key.sign(OpenSSL::Digest::SHA1.new, canonicalized_signed_info))
+      encoded_certificate = Base64.strict_encode64(credential.certificate.to_der).scan(/.{1,64}/).join("\n")
+      issuer_name = credential.certificate.issuer.to_s(OpenSSL::X509::Name::RFC2253)
+      serial_number = credential.certificate.serial.to_i
 
       signature.add_element("SignatureValue").text = signature_value
       signature.add_element("KeyInfo").tap do |key_info|

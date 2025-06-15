@@ -791,7 +791,7 @@ class Croatia::InvoiceTest < Minitest::Test
   end
 
   def test_fiscalization_qr_code_with_unique_identifier
-    cert_data = generate_test_credentials
+    credential_data = generate_test_credentials
 
     invoice = Croatia::Invoice.new(
       unique_invoice_identifier: "12345678-1234-1234-1234-123456789012",
@@ -808,8 +808,8 @@ class Croatia::InvoiceTest < Minitest::Test
     end
 
     qr_code = invoice.fiscalization_qr_code(
-      credential: cert_data[:p12],
-      password: cert_data[:password]
+      credential: credential_data[:p12],
+      password: credential_data[:password]
     )
 
     assert_instance_of Croatia::QRCode, qr_code
@@ -819,7 +819,7 @@ class Croatia::InvoiceTest < Minitest::Test
   end
 
   def test_fiscalization_qr_code_with_options
-    cert_data = generate_test_credentials
+    credential_data = generate_test_credentials
 
     invoice = Croatia::Invoice.new(
       unique_invoice_identifier: "different-uuid",
@@ -837,8 +837,8 @@ class Croatia::InvoiceTest < Minitest::Test
 
     # Test with different unique identifier on the invoice
     qr_code = invoice.fiscalization_qr_code(
-      credential: cert_data[:p12],
-      password: cert_data[:password]
+      credential: credential_data[:p12],
+      password: credential_data[:password]
     )
 
     expected_url = "https://porezna.gov.hr/rn?datv=20240115_1530&izn=15431&jir=different-uuid"
@@ -846,12 +846,12 @@ class Croatia::InvoiceTest < Minitest::Test
   end
 
   def test_fiscalization_qr_code_with_issuer_protection_code
-    cert_data = generate_test_credentials
+    credential_data = generate_test_credentials
 
     config = Croatia::Config.new(
       fiscalization: {
-        credential: cert_data[:p12],
-        password: cert_data[:password]
+        credential: credential_data[:p12],
+        password: credential_data[:password]
       }
     )
 
@@ -882,12 +882,12 @@ class Croatia::InvoiceTest < Minitest::Test
   end
 
   def test_fiscalization_qr_code_validation_errors
-    cert_data = generate_test_credentials
+    credential_data = generate_test_credentials
 
     config = Croatia::Config.new(
       fiscalization: {
-        credential: cert_data[:p12],
-        password: cert_data[:password]
+        credential: credential_data[:p12],
+        password: credential_data[:password]
       }
     )
 
@@ -914,7 +914,7 @@ class Croatia::InvoiceTest < Minitest::Test
   end
 
   def test_fiscalization_qr_code_amount_validation
-    cert_data = generate_test_credentials
+    credential_data = generate_test_credentials
 
     invoice = Croatia::Invoice.new(
       unique_invoice_identifier: "12345678-1234-1234-1234-123456789012",
@@ -933,14 +933,14 @@ class Croatia::InvoiceTest < Minitest::Test
 
     assert_raises(ArgumentError, "Total amount exceeds 10 digits") do
       invoice.fiscalization_qr_code(
-        certificate: cert_data[:p12],
-        password: cert_data[:password]
+        credential: credential_data[:p12],
+        password: credential_data[:password]
       )
     end
   end
 
   def test_issuer_protection_code_method
-    cert_data = generate_test_credentials
+    credential_data = generate_test_credentials
 
     invoice = Croatia::Invoice.new(
       issue_date: DateTime.new(2024, 1, 15, 14, 30, 0),
@@ -961,13 +961,13 @@ class Croatia::InvoiceTest < Minitest::Test
       item.add_tax(rate: 0.25)
     end
 
-    # Test that the method exists and can be called with certificate options
+    # Test that the method exists and can be called with credential options
     assert_respond_to invoice, :issuer_protection_code
 
-    # The Fiscalizer requires a certificate parameter
+    # The Fiscalizer requires a credential parameter
     protection_code = invoice.issuer_protection_code(
-      credential: cert_data[:p12],
-      password: cert_data[:password]
+      credential: credential_data[:p12],
+      password: credential_data[:password]
     )
 
     # The protection code would be a string (implementation dependent)

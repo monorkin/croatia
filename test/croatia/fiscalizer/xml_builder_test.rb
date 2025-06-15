@@ -640,16 +640,16 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
   end
 
   def test_sign_with_valid_document
-    certificate_data = file_fixture("fake_fiskal1.p12").read
+    credential_data = file_fixture("fake_fiskal1.p12").read
     password = file_fixture("fake_fiskal1_password.txt").read.strip
-    certificate = OpenSSL::PKCS12.new(certificate_data, password)
+    credential = OpenSSL::PKCS12.new(credential_data, password)
 
     # Create a simple XML document with Id attribute
     doc = REXML::Document.new
     root = doc.add_element("TestDocument", { "Id" => "test-id-123" })
     root.add_element("Content").text = "Test content"
 
-    Croatia::Fiscalizer::XMLBuilder.sign(document: doc, certificate: certificate)
+    Croatia::Fiscalizer::XMLBuilder.sign(document: doc, credential: credential)
 
     expected_xml = <<~XML
       <TestDocument Id='test-id-123'>
@@ -700,16 +700,16 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
   end
 
   def test_sign_validation_error_missing_id
-    certificate_data = file_fixture("fake_fiskal1.p12").read
+    credential_data = file_fixture("fake_fiskal1.p12").read
     password = file_fixture("fake_fiskal1_password.txt").read.strip
-    certificate = OpenSSL::PKCS12.new(certificate_data, password)
+    credential = OpenSSL::PKCS12.new(credential_data, password)
 
     # Create a document without Id attribute
     doc = REXML::Document.new
     doc.add_element("TestDocument")
 
     assert_raises(ArgumentError, "Document root element must have a non-empty 'Id' attribute") do
-      Croatia::Fiscalizer::XMLBuilder.sign(document: doc, certificate: certificate)
+      Croatia::Fiscalizer::XMLBuilder.sign(document: doc, credential: credential)
     end
   end
 
@@ -723,7 +723,7 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
     doc.add_element("TestDocument", { "Id" => "" })
 
     assert_raises(ArgumentError, "Document root element must have a non-empty 'Id' attribute") do
-      Croatia::Fiscalizer::XMLBuilder.sign(document: doc, certificate: certificate)
+      Croatia::Fiscalizer::XMLBuilder.sign(document: doc, credential: certificate)
     end
   end
 
@@ -760,12 +760,12 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
         refute_nil document.root.attributes["Id"], "Document should have Id attribute"
         assert_equal message_id, document.root.attributes["Id"]
 
-        certificate_data = file_fixture("fake_fiskal1.p12").read
+        credential_data = file_fixture("fake_fiskal1.p12").read
         password = file_fixture("fake_fiskal1_password.txt").read.strip
-        certificate = OpenSSL::PKCS12.new(certificate_data, password)
+        credential = OpenSSL::PKCS12.new(credential_data, password)
 
         # Sign the document
-        Croatia::Fiscalizer::XMLBuilder.sign(document: document, certificate: certificate)
+        Croatia::Fiscalizer::XMLBuilder.sign(document: document, credential: credential)
 
         # Verify signature was added
         signature = document.root.elements["Signature"]

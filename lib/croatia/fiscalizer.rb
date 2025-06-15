@@ -18,12 +18,12 @@ class Croatia::Fiscalizer
     credential ||= Croatia.config.fiscalization[:credential]
     password ||= Croatia.config.fiscalization[:password]
 
-    @credential = load_certificate(credential, password)
+    @credential = load_credential(credential, password)
   end
 
   def fiscalize(invoice:, message_id: SecureRandom.uuid)
     document = XMLBuilder.invoice(invoice: invoice, message_id: message_id, timezone: TZ)
-    document = XMLBuilder.sign(document: document, certificate: credential)
+    document = XMLBuilder.sign(document: document, credential: credential)
     raise NotImplementedError, "Fiscalization XML generation is not implemented yet"
   end
 
@@ -72,7 +72,7 @@ class Croatia::Fiscalizer
 
   private
 
-    def load_certificate(credential, password)
+    def load_credential(credential, password)
       case credential
       in OpenSSL::PKCS12
         credential
@@ -97,7 +97,7 @@ class Croatia::Fiscalizer
 
         OpenSSL::PKCS12.create(password, "FISKAL1", private_key, certificate, ca_certs)
       else
-        raise ArgumentError, "Invalid certificate format"
+        raise ArgumentError, "Invalid credential format"
       end
     end
 
