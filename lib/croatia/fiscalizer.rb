@@ -34,7 +34,7 @@ class Croatia::Fiscalizer
     buffer << invoice.sequential_number
     buffer << invoice.business_location_identifier
     buffer << invoice.register_identifier
-    buffer << invoice.total.to_f
+    buffer << format("%.2f", invoice.total)
 
     digest = OpenSSL::Digest::SHA1.new
     signature = credential.key.sign(digest, buffer.join)

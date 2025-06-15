@@ -222,7 +222,7 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
               <tns:IznosUkupno>125.00</tns:IznosUkupno>
               <tns:NacinPlac>K</tns:NacinPlac>
               <tns:OibOper>86988477146</tns:OibOper>
-              <tns:ZastKod>ff3812ca784e70ce092a9f9028ba5308</tns:ZastKod>
+              <tns:ZastKod>2b9b3878cdc423b3d767c53cc77ff47c</tns:ZastKod>
               <tns:NakDost>false</tns:NakDost>
               <tns:PrateciDokument>
                 <tns:JirPD>test-jir-unique-identifier-123</tns:JirPD>
@@ -304,7 +304,7 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
               <tns:IznosUkupno>125.00</tns:IznosUkupno>
               <tns:NacinPlac>K</tns:NacinPlac>
               <tns:OibOper>86988477146</tns:OibOper>
-              <tns:ZastKod>a086b4f9eccced0dcb7664ab8e04bae8</tns:ZastKod>
+              <tns:ZastKod>186d169769f6ba87f0cc103da793fad7</tns:ZastKod>
               <tns:NakDost>true</tns:NakDost>
               <tns:PrateciDokument>
                 <tns:ZastKodPD>test-issuer-protection-code-zki-456</tns:ZastKodPD>
@@ -430,7 +430,7 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
               <tns:IznosUkupno>125.00</tns:IznosUkupno>
               <tns:NacinPlac>G</tns:NacinPlac>
               <tns:OibOper>86988477146</tns:OibOper>
-              <tns:ZastKod>a844376b0b6c9cba56f85445f4ced6ac</tns:ZastKod>
+              <tns:ZastKod>f890d7da7eafb868dcd60671b8f3724e</tns:ZastKod>
               <tns:NakDost>false</tns:NakDost>
               <tns:PromijenjeniNacinPlac>K</tns:PromijenjeniNacinPlac>
             </tns:Racun>
@@ -512,7 +512,7 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
               <tns:IznosUkupno>125.00</tns:IznosUkupno>
               <tns:NacinPlac>T</tns:NacinPlac>
               <tns:OibOper>86988477146</tns:OibOper>
-              <tns:ZastKod>5dfd19829a93d1cd4faac1b1c0ce6f32</tns:ZastKod>
+              <tns:ZastKod>4074af68975fb56c3b567614ecf2bb05</tns:ZastKod>
               <tns:NakDost>true</tns:NakDost>
               <tns:PrateciDokument>
                 <tns:JirPD>test-jir-payment-change-123</tns:JirPD>
@@ -628,7 +628,7 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
               <tns:IznosUkupno>125.00</tns:IznosUkupno>
               <tns:NacinPlac>K</tns:NacinPlac>
               <tns:OibOper>86988477146</tns:OibOper>
-              <tns:ZastKod>be07aa9ab67076b71559bcb85f883320</tns:ZastKod>
+              <tns:ZastKod>de2c11aad4f14744678c513990899f56</tns:ZastKod>
               <tns:NakDost>false</tns:NakDost>
             </tns:Racun>
           </tns:ProvjeraZahtjev>
