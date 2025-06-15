@@ -80,9 +80,9 @@ class Croatia::Fiscalizer
         OpenSSL::PKCS12.new(File.read(credential), password)
       in String
         OpenSSL::PKCS12.new(credential, password)
-      in { private_key: String, public_certificate: String, **rest }
+      in { private_key: String, certificate: String, **rest }
         private_key_content = is_a_file_path?(credential[:private_key]) ? File.read(credential[:private_key]) : credential[:private_key]
-        certificate_content = is_a_file_path?(credential[:public_certificate]) ? File.read(credential[:public_certificate]) : credential[:public_certificate]
+        certificate_content = is_a_file_path?(credential[:certificate]) ? File.read(credential[:certificate]) : credential[:certificate]
 
         private_key = OpenSSL::PKey::RSA.new(private_key_content)
         certificate = OpenSSL::X509::Certificate.new(certificate_content)

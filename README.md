@@ -8,7 +8,7 @@ Croatia is a gem that contains various utilities for performing Croatia-specific
   - [x] Validation
   - [x] Parsing
   - [x] Generation
-- [ ] Invoices
+- [ ] Invoices [MISSING E-INVOICE SUPPORT]
   - [x] Discounts
     - [x] Percentage
     - [x] Total
@@ -19,12 +19,12 @@ Croatia is a gem that contains various utilities for performing Croatia-specific
   - [x] Margins _(Marza)_
 - [x] Payment barcodes
   - [x] HUB3 standard 2D barcode generation
-- [ ] Fiscalization v2.3 _(Fiskalizacija)_
+- [ ] Fiscalization v2.3 _(Fiskalizacija)_  [NOT YET VERIFIED]
   - [x] Issuer protection code generation _(ZKI)_
   - [x] Reverse _(storno)_
-  - [ ] Invoices _(racuni)_
-  - [ ] Supporting documents _(prateci dokumenti - otpremnice, radni nalozi, ponude, ugovori, ...)_
-  - [ ] Payment method change
+  - [x] Invoices _(racuni)_
+  - [x] Supporting documents _(prateci dokumenti - otpremnice, radni nalozi, ponude, ugovori, ...)_
+  - [x] Payment method change
   - [x] Verification QR code generation
 - [ ] E-Invoice _(e-Racun)_
 
@@ -64,13 +64,17 @@ Croatia.configure do |config|
 
   # Fiscalization defaults
   config.fiscalization = {
-    certificate: "path/to/your/certificate.p12", # or File.read("path/to/your/certificate.p12")
-    password: ENV["FISCALIZATION_CERTIFICATE_PASSWORD"]
+    credential: "path/to/your/credential.p12", # or File.read("path/to/your/credential.p12")
+    password: ENV["FISCALIZATION_CREDENTIAL_PASSWORD"]
   }
-  # You can also use a plain private key (.key) file instead of a full certificate (.p12)
-  # if you don't have a .p12 or don't want to store/manage a password.
+  # You can also use separate private key and certificate files instead of a full credential (.p12)
   # config.fiscalization = {
-  #   certificate: "path/to/your/private_key.key", # or ENV["FISCALIZATION_PRIVATE_KEY"],
+  #   credential: {
+  #     private_key: "path/to/your/private_key.key", # or ENV["FISCALIZATION_PRIVATE_KEY"]
+  #     certificate: "path/to/your/certificate.crt", # or ENV["FISCALIZATION_CERTIFICATE"]
+  #     ca_chain: ENV["FISCALIZATION_CA_CHAIN"] # optional, or "path/to/your/ca_cert.crt"
+  #   },
+  #   password: "credential_password" # only needed for encrypted private keys
   # }
 end
 ```
@@ -255,10 +259,10 @@ barcode.to_png # => "\b..."
 # Issuer protection code (ZKI) is generated automatically
 invoice.issuer_protection_code # => "abcd1234efgh5678ijkl9012mnop3456"
 
-# Fiscalize an invoice using the certificate from the config
+# Fiscalize an invoice using the credential from the config
 invoice.fiscalize!
-# Fiscalize an invoice using a custom certificate and password
-invoice.fiscalize!(certificate: "path/to/your/certificate.p12", password: "your_password")
+# Fiscalize an invoice using a custom credential and password
+invoice.fiscalize!(credential: "path/to/your/credential.p12", password: "your_password")
 
 # In case you want to "undo" a fiscalized invoice, you can reverse the invoice
 invoice.reverse!
