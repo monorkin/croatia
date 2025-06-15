@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "rexml/document"
 
 class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
   include FixturesHelper
@@ -77,7 +78,7 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
         )
 
         expected_xml = <<~XML
-          <tns:RacunZahtjev xmlns:tns='http://www.apis-it.hr/fin/2012/types/f73' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'>
+          <tns:RacunZahtjev xmlns:tns='http://www.apis-it.hr/fin/2012/types/f73' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' Id='c2bb23ad-7044-4b06-b259-04475acecc1e'>
             <tns:Zaglavlje>
               <tns:IdPoruke>c2bb23ad-7044-4b06-b259-04475acecc1e</tns:IdPoruke>
               <tns:DatumVrijemeSlanja>04.06.2025T07:44:31</tns:DatumVrijemeSlanja>
@@ -196,7 +197,7 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
         )
 
         expected_xml = <<~XML
-          <tns:RacunPDZahtjev xmlns:tns='http://www.apis-it.hr/fin/2012/types/f73' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'>
+          <tns:RacunPDZahtjev xmlns:tns='http://www.apis-it.hr/fin/2012/types/f73' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' Id='supporting-doc-test-uuid-12345678901'>
             <tns:Zaglavlje>
               <tns:IdPoruke>supporting-doc-test-uuid-12345678901</tns:IdPoruke>
               <tns:DatumVrijemeSlanja>04.06.2025T07:44:31</tns:DatumVrijemeSlanja>
@@ -278,7 +279,7 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
         )
 
         expected_xml = <<~XML
-          <tns:RacunPDZahtjev xmlns:tns='http://www.apis-it.hr/fin/2012/types/f73' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'>
+          <tns:RacunPDZahtjev xmlns:tns='http://www.apis-it.hr/fin/2012/types/f73' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' Id='support-doc-zki-test-uuid-1234567890'>
             <tns:Zaglavlje>
               <tns:IdPoruke>support-doc-zki-test-uuid-1234567890</tns:IdPoruke>
               <tns:DatumVrijemeSlanja>04.06.2025T07:44:31</tns:DatumVrijemeSlanja>
@@ -404,7 +405,7 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
         )
 
         expected_xml = <<~XML
-          <tns:PromijeniNacPlacZahtjev xmlns:tns='http://www.apis-it.hr/fin/2012/types/f73' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'>
+          <tns:PromijeniNacPlacZahtjev xmlns:tns='http://www.apis-it.hr/fin/2012/types/f73' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' Id='c2bb23ad-7044-4b06-b259-04475acecc1e'>
             <tns:Zaglavlje>
               <tns:IdPoruke>c2bb23ad-7044-4b06-b259-04475acecc1e</tns:IdPoruke>
               <tns:DatumVrijemeSlanja>04.06.2025T07:44:31</tns:DatumVrijemeSlanja>
@@ -486,7 +487,7 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
         )
 
         expected_xml = <<~XML
-          <tns:PromijeniNacPlacZahtjev xmlns:tns='http://www.apis-it.hr/fin/2012/types/f73' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'>
+          <tns:PromijeniNacPlacZahtjev xmlns:tns='http://www.apis-it.hr/fin/2012/types/f73' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' Id='c2bb23ad-7044-4b06-b259-04475acecc1e'>
             <tns:Zaglavlje>
               <tns:IdPoruke>c2bb23ad-7044-4b06-b259-04475acecc1e</tns:IdPoruke>
               <tns:DatumVrijemeSlanja>04.06.2025T07:44:31</tns:DatumVrijemeSlanja>
@@ -602,7 +603,7 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
         )
 
         expected_xml = <<~XML
-          <tns:ProvjeraZahtjev xmlns:tns='http://www.apis-it.hr/fin/2012/types/f73' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'>
+          <tns:ProvjeraZahtjev xmlns:tns='http://www.apis-it.hr/fin/2012/types/f73' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' Id='c2bb23ad-7044-4b06-b259-04475acecc1e'>
             <tns:Zaglavlje>
               <tns:IdPoruke>c2bb23ad-7044-4b06-b259-04475acecc1e</tns:IdPoruke>
               <tns:DatumVrijemeSlanja>04.06.2025T07:44:31</tns:DatumVrijemeSlanja>
@@ -634,6 +635,145 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
         XML
 
         assert_xml_equal expected_xml, actual_xml
+      end
+    end
+  end
+
+  def test_sign_with_valid_document
+    certificate_data = file_fixture("fake_fiskal1.p12").read
+    password = file_fixture("fake_fiskal1_password.txt").read.strip
+    certificate = OpenSSL::PKCS12.new(certificate_data, password)
+
+    # Create a simple XML document with Id attribute
+    doc = REXML::Document.new
+    root = doc.add_element("TestDocument", { "Id" => "test-id-123" })
+    root.add_element("Content").text = "Test content"
+
+    Croatia::Fiscalizer::XMLBuilder.sign(document: doc, certificate: certificate)
+
+    expected_xml = <<~XML
+      <TestDocument Id='test-id-123'>
+        <Content>Test content</Content>
+        <Signature xmlns='http://www.w3.org/2000/09/xmldsig#'>
+          <SignedInfo>
+            <CanonicalizationMethod Algorithm='http://www.w3.org/2001/10/xml-exc-c14n#'/>
+            <SignatureMethod Algorithm='http://www.w3.org/2000/09/xmldsig#rsa-sha1'/>
+            <Reference URI='#test-id-123'>
+              <Transforms>
+                <Transform Algorithm='http://www.w3.org/2001/10/xml-exc-c14n#'/>
+                <Transform Algorithm='http://www.w3.org/2000/09/xmldsig#enveloped-signature'/>
+              </Transforms>
+              <DigestMethod Algorithm='http://www.w3.org/2000/09/xmldsig#sha1'/>
+              <DigestValue>xVO05KssA2WQLesc7XXYpLZdoDg=</DigestValue>
+            </Reference>
+          </SignedInfo>
+          <SignatureValue>T/6zG/NqE56T0+p191ZDVVXDFJATq5+DvqUEE7dryqfv4ZCoCZ7R3WR4/ei3QWKgr0SHep0bms84ur3B113q0nclZ+gYXpudiPSI1ESu5rxGf3g+JWj/uqwry/W3MEm3SqgzCG2oQ7NMUh5SIItN3QL7rYOtAlcn3AGp8MuEK2Z7Fmc2f7+vF3N14xmHSM3PDAWfyCX+CY607bPrpYoA4ZV6/uDRIuftS0ND3Zg6c2xS6t/RTny+ssWsR+WraVxDD6NcK99nHYYxdujNPGfSsZwDUZWm5yPvO6SFwbtijX5W7r3xNFFYOOvxpjVppq0taJn9jb/8rNLuGCblngHW4A==</SignatureValue>
+          <KeyInfo>
+            <X509Data>
+              <X509Certificate>MIIC1TCCAb2gAwIBAgIDATf5MA0GCSqGSIb3DQEBCwUAMBsxGTAXBgNVBAMMEFRl
+        c3QgQ2VydGlmaWNhdGUwIBcNMjUwNjA0MDc0NDMyWhgPMjEyNTA1MTEwNzQ0MzJa
+        MBsxGTAXBgNVBAMMEFRlc3QgQ2VydGlmaWNhdGUwggEiMA0GCSqGSIb3DQEBAQUA
+        A4IBDwAwggEKAoIBAQCfeL/gYSOCd5Qmpwn0IcGji/c4Ax96Wep9yoN1KAVUMo5Y
+        XbA2a9OCafyrWmSoWFL2ihd+suPIPTdcn+4S9LjLKgTlF00ZjCYUrd0N4zxVy8+q
+        t9cYKLzIDMXND5GEc7eEcd7V4Me/6/4Z73FDHd3vE0+PYSLFshm/Sc5CFeV1T67+
+        PxFyFpJIZWXtqaUsvrJ2xF4PqsqnhHyra0bgLQA52jTu0wHhmyq/ndpYB/F9QZKv
+        VdKwE9vEw3Ffjav5bve8hEzGJpX/2J4fb0aBndXsj/Z3fByIZcEHGuTTxxkl/2+Y
+        qt0rnIwXngq+BYKhb02oxppER7b7bZzOrRaiV4jJAgMBAAGjIDAeMAwGA1UdEwEB
+        /wQCMAAwDgYDVR0PAQH/BAQDAgWgMA0GCSqGSIb3DQEBCwUAA4IBAQCMsI5Vq6Ii
+        t95STHWP0kp3zccabodNAZu1VsCcJVb3elBvvKsoMqr0UQ2SkiQjogOfjfSzNwGG
+        o2N0KPb+6JOx2//YGk32boynqTZ8epEUQlgiTe2xb1IyOFoCOHDazpuABLt1VitY
+        v0dg18BpBFCq8oxLl4fzLOXnHjSzV6Yz9xJ0GNJ0tt5BFOW3BnN7/EfLNNd7m+Tv
+        A7hUawPh4+jdrZMnvJwy9TwsS4SBDqm4d/Toyvkxq+2N0WJ0Tka7oaePiKEt6s36
+        EyitLWJBrXgHcgjRHxRa4UrC0h66kIUC814iw5XNC9V9dNcrAjkZCtdYsxhpkOkz
+        bKatxi5CFV/v</X509Certificate>
+              <X509IssuerSerial>
+                <X509IssuerName>CN=Test Certificate</X509IssuerName>
+                <X509SerialNumber>79865</X509SerialNumber>
+              </X509IssuerSerial>
+            </X509Data>
+          </KeyInfo>
+        </Signature>
+      </TestDocument>
+    XML
+
+    assert_xml_equal expected_xml, doc
+  end
+
+  def test_sign_validation_error_missing_id
+    certificate_data = file_fixture("fake_fiskal1.p12").read
+    password = file_fixture("fake_fiskal1_password.txt").read.strip
+    certificate = OpenSSL::PKCS12.new(certificate_data, password)
+
+    # Create a document without Id attribute
+    doc = REXML::Document.new
+    doc.add_element("TestDocument")
+
+    assert_raises(ArgumentError, "Document root element must have a non-empty 'Id' attribute") do
+      Croatia::Fiscalizer::XMLBuilder.sign(document: doc, certificate: certificate)
+    end
+  end
+
+  def test_sign_validation_error_empty_id
+    certificate_data = file_fixture("fake_fiskal1.p12").read
+    password = file_fixture("fake_fiskal1_password.txt").read.strip
+    certificate = OpenSSL::PKCS12.new(certificate_data, password)
+
+    # Create a document with empty Id attribute
+    doc = REXML::Document.new
+    doc.add_element("TestDocument", { "Id" => "" })
+
+    assert_raises(ArgumentError, "Document root element must have a non-empty 'Id' attribute") do
+      Croatia::Fiscalizer::XMLBuilder.sign(document: doc, certificate: certificate)
+    end
+  end
+
+  def test_sign_with_invoice_document
+    Timecop.freeze(REFERENCE_TIME) do
+      config = Croatia::Config.new(
+        fiscalization: {
+          certificate: file_fixture("fake_fiskal1.p12").read,
+          password: file_fixture("fake_fiskal1_password.txt").read.strip
+        }
+      )
+
+      Croatia.with_config(config) do
+        invoice = Croatia::Invoice.new(
+          sequential_number: 777,
+          business_location_identifier: "POSL1",
+          register_identifier: "12",
+          issue_date: Time.now - 5,
+          sequential_by: :register,
+        )
+
+        invoice.issuer { |i| i.pin = "86988477146" }
+        invoice.seller { |s| s.pin = "05575695113"; s.pays_vat = true }
+        invoice.add_line_item { |i| i.description = "Sign test"; i.unit_price = 100.0; i.add_tax(type: :value_added_tax, category: :standard) }
+
+        message_id = "c2bb23ad-7044-4b06-b259-04475acecc1e"
+        document = Croatia::Fiscalizer::XMLBuilder.invoice(
+          invoice: invoice,
+          message_id: message_id,
+          subsequent_delivery: false
+        )
+
+        # Verify the document has an Id attribute (added by build method)
+        refute_nil document.root.attributes["Id"], "Document should have Id attribute"
+        assert_equal message_id, document.root.attributes["Id"]
+
+        certificate_data = file_fixture("fake_fiskal1.p12").read
+        password = file_fixture("fake_fiskal1_password.txt").read.strip
+        certificate = OpenSSL::PKCS12.new(certificate_data, password)
+
+        # Sign the document
+        Croatia::Fiscalizer::XMLBuilder.sign(document: document, certificate: certificate)
+
+        # Verify signature was added
+        signature = document.root.elements["Signature"]
+        refute_nil signature, "Signature should be present in signed document"
+
+        # Verify the reference URI matches the document Id
+        reference = signature.elements["SignedInfo/Reference"]
+        assert_equal "##{message_id}", reference.attributes["URI"]
       end
     end
   end

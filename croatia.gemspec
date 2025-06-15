@@ -39,6 +39,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "openssl"
   spec.add_dependency "rexml"
   spec.add_dependency "tzinfo"
+  spec.add_dependency "nokogiri"
 
   # For more information and examples about making a new gem, check out our
   # guide at: https://bundler.io/guides/creating_gem.html

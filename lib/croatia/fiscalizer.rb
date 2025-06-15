@@ -22,7 +22,8 @@ class Croatia::Fiscalizer
   end
 
   def fiscalize(invoice:, message_id: SecureRandom.uuid)
-    _document = XMLBuilder.invoice(invoice: invoice, message_id: message_id, timezone: TZ)
+    document = XMLBuilder.invoice(invoice: invoice, message_id: message_id, timezone: TZ)
+    document = XMLBuilder.sign(document: document, certificate: certificate)
     raise NotImplementedError, "Fiscalization XML generation is not implemented yet"
   end
 

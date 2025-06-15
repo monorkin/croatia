@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 require "rexml/document"
+require "nokogiri"
+require "openssl"
+require "base64"
 
 module Croatia::Fiscalizer::XMLBuilder
   TNS = "http://www.apis-it.hr/fin/2012/types/f73"
@@ -72,6 +75,65 @@ module Croatia::Fiscalizer::XMLBuilder
       )
     end
 
+    def echo(message:)
+      # TODO: Implement echo message
+      message
+    end
+
+    def sign(document:, certificate:)
+      id = document.root.attributes["Id"]
+
+      if id.nil? || id.empty?
+        raise ArgumentError, "Document root element must have a non-empty 'Id' attribute"
+      end
+
+      signature = REXML::Element.new("Signature")
+
+      canonicalized_xml = Nokogiri::XML(document.to_s, &:noblanks).root.canonicalize(
+        Nokogiri::XML::XML_C14N_EXCLUSIVE_1_0,
+        [],
+        false
+      )
+
+      digest = Base64.strict_encode64(OpenSSL::Digest::SHA1.digest(canonicalized_xml))
+
+      signed_info = signature.add_element("SignedInfo")
+      signed_info.add_element("CanonicalizationMethod", { "Algorithm" => "http://www.w3.org/2001/10/xml-exc-c14n#" })
+      signed_info.add_element("SignatureMethod", { "Algorithm" => "http://www.w3.org/2000/09/xmldsig#rsa-sha1" })
+      signed_info.add_element("Reference", { "URI" => "##{id}" }).tap do |reference|
+        reference.add_element("Transforms").tap do |transforms|
+          transforms.add_element("Transform", { "Algorithm" => "http://www.w3.org/2001/10/xml-exc-c14n#" })
+          transforms.add_element("Transform", { "Algorithm" => "http://www.w3.org/2000/09/xmldsig#enveloped-signature" })
+        end
+        reference.add_element("DigestMethod", { "Algorithm" => "http://www.w3.org/2000/09/xmldsig#sha1" })
+        reference.add_element("DigestValue").text = digest
+      end
+
+      canonicalized_signed_info = Nokogiri::XML(signed_info.to_s, &:noblanks).root.canonicalize(
+        Nokogiri::XML::XML_C14N_EXCLUSIVE_1_0,
+        [],
+        false
+      )
+
+      signature_value = Base64.strict_encode64(certificate.key.sign(OpenSSL::Digest::SHA1.new, canonicalized_signed_info))
+      encoded_certificate = Base64.strict_encode64(certificate.certificate.to_der).scan(/.{1,64}/).join("\n")
+      issuer_name = certificate.certificate.issuer.to_s(OpenSSL::X509::Name::RFC2253)
+      serial_number = certificate.certificate.serial.to_i
+
+      signature.add_element("SignatureValue").text = signature_value
+      signature.add_element("KeyInfo").tap do |key_info|
+        key_info.add_element("X509Data").tap do |x509_data|
+          x509_data.add_element("X509Certificate").text = encoded_certificate
+          x509_data.add_element("X509IssuerSerial").tap do |issuer_serial|
+            issuer_serial.add_element("X509IssuerName").text = issuer_name
+            issuer_serial.add_element("X509SerialNumber").text = serial_number.to_s
+          end
+        end
+      end
+
+      document.root.add_element(signature, { "xmlns" => "http://www.w3.org/2000/09/xmldsig#" })
+    end
+
     private
 
       def build(envelope:, invoice:, message_id:, timezone: Croatia::Fiscalizer::TZ, **options)
@@ -90,7 +152,8 @@ module Croatia::Fiscalizer::XMLBuilder
         REXML::Document.new.tap do |doc|
           envelope = doc.add_element("tns:#{envelope}", {
             "xmlns:tns" => TNS,
-            "xmlns:xsi" => XSI
+            "xmlns:xsi" => XSI,
+            "Id" => message_id
           })
 
           envelope.add_element("tns:Zaglavlje").tap do |header|
