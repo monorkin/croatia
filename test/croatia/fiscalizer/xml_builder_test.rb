@@ -6,7 +6,7 @@ require "rexml/document"
 class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
   include FixturesHelper
   include XMLHelper
-  include CertificateHelper
+  include FiscalizationCredentialsHelper
 
   REFERENCE_TIME = Time.new(2025, 06, 04, 07, 44, 31, "+02:00")
 

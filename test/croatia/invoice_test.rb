@@ -3,7 +3,7 @@
 require "test_helper"
 
 class Croatia::InvoiceTest < Minitest::Test
-  include CertificateHelper
+  include FiscalizationCredentialsHelper
 
   def test_initialize_with_defaults
     invoice = Croatia::Invoice.new(
@@ -791,7 +791,7 @@ class Croatia::InvoiceTest < Minitest::Test
   end
 
   def test_fiscalization_qr_code_with_unique_identifier
-    cert_data = generate_test_certificate
+    cert_data = generate_test_credentials
 
     invoice = Croatia::Invoice.new(
       unique_invoice_identifier: "12345678-1234-1234-1234-123456789012",
@@ -819,7 +819,7 @@ class Croatia::InvoiceTest < Minitest::Test
   end
 
   def test_fiscalization_qr_code_with_options
-    cert_data = generate_test_certificate
+    cert_data = generate_test_credentials
 
     invoice = Croatia::Invoice.new(
       unique_invoice_identifier: "different-uuid",
@@ -846,7 +846,7 @@ class Croatia::InvoiceTest < Minitest::Test
   end
 
   def test_fiscalization_qr_code_with_issuer_protection_code
-    cert_data = generate_test_certificate
+    cert_data = generate_test_credentials
 
     config = Croatia::Config.new(
       fiscalization: {
@@ -882,7 +882,7 @@ class Croatia::InvoiceTest < Minitest::Test
   end
 
   def test_fiscalization_qr_code_validation_errors
-    cert_data = generate_test_certificate
+    cert_data = generate_test_credentials
 
     config = Croatia::Config.new(
       fiscalization: {
@@ -914,7 +914,7 @@ class Croatia::InvoiceTest < Minitest::Test
   end
 
   def test_fiscalization_qr_code_amount_validation
-    cert_data = generate_test_certificate
+    cert_data = generate_test_credentials
 
     invoice = Croatia::Invoice.new(
       unique_invoice_identifier: "12345678-1234-1234-1234-123456789012",
@@ -940,7 +940,7 @@ class Croatia::InvoiceTest < Minitest::Test
   end
 
   def test_issuer_protection_code_method
-    cert_data = generate_test_certificate
+    cert_data = generate_test_credentials
 
     invoice = Croatia::Invoice.new(
       issue_date: DateTime.new(2024, 1, 15, 14, 30, 0),

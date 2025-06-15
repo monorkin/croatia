@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-module CertificateHelper
+module FiscalizationCredentialsHelper
   DEFAULT_PASSWORD = "test?password123"
 
-  def generate_test_certificate(path = nil, password: DEFAULT_PASSWORD)
+  def generate_test_credentials(path = nil, password: DEFAULT_PASSWORD)
     key = OpenSSL::PKey::RSA.new(2048)
 
     cert = OpenSSL::X509::Certificate.new

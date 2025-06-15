@@ -11,6 +11,6 @@ require "tzinfo"
 require "timecop"
 require "minitest/autorun"
 
-require_relative "./helpers/certificate_helper"
+require_relative "./helpers/fiscalization_credentials_helper"
 require_relative "./helpers/fixtures_helper"
 require_relative "./helpers/xml_helper"
