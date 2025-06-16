@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "digest/md5"
+require "net/http"
 require "openssl"
 require "securerandom"
 require "tzinfo"
@@ -11,6 +12,60 @@ class Croatia::Fiscalizer
 
   TZ = TZInfo::Timezone.get("Europe/Zagreb")
   QR_CODE_BASE_URL = "https://porezna.gov.hr/rn"
+  DEFAULT_PORT = 443
+  DEFAULT_TIMEOUT = 30
+  USER_AGENT = "Croatia/#{Croatia::VERSION} Ruby/#{RUBY_VERSION} (Fiscalization Client; +https://github.com/monorkin/croatia)"
+
+  class << self
+    attr_accessor :http_clients
+
+    def with_http_client_for(**options, &block)
+      client = http_client_for(**options)
+      retrying = false
+
+      begin
+        block.call(client)
+      rescue IOError, EOFError, Errno::ECONNRESET
+        raise if retrying
+
+        retrying = true
+        client.finish rescue nil
+        client.start
+
+        retry
+      end
+    end
+
+    def http_client_for(host:, credential:, port: DEFAULT_PORT, timeout: DEFAULT_TIMEOUT)
+      self.http_clients ||= {}
+
+      # MD5 is fast, but not cryptographically secure.
+      # So the fingerprint is computed on less sensitive information.
+      fingerprint = Digest::MD5.hexdigest("#{credential.certificate.serial}:#{credential.certificate.subject}")
+      key = "#{host}:#{port}/#{fingerprint}?timeout=#{timeout}"
+
+      client = http_clients[key]
+
+      if client&.active?
+        return client
+      end
+
+      client&.finish rescue nil
+      http_clients[key] = Net::HTTP.new(host, port).tap do |client|
+        client.use_ssl = true
+        client.verify_mode = OpenSSL::SSL::VERIFY_PEER
+        client.cert = credential.certificate
+        client.key = credential.key
+        client.keep_alive_timeout = timeout
+        client.start
+      end
+    end
+
+    def shutdown_all_clients
+      http_clients&.each_value { |c| c.finish rescue nil }
+      self.http_clients = {}
+    end
+  end
 
   attr_reader :credential
 
