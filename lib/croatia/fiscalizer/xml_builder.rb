@@ -133,8 +133,22 @@ module Croatia::Fiscalizer::XMLBuilder
       REXML::Document.new.tap do |doc|
         doc.add_element("tns:EchoRequest", {
           "xmlns:tns" => TNS,
-          "xmlns:xsi" => XSI,
+          "xmlns:xsi" => XSI
       }).text = message
+      end
+    end
+
+    def soap_envelope(document)
+      REXML::Document.new.tap do |soap_doc|
+        soap_doc << REXML::XMLDecl.new("1.0", "UTF-8")
+
+        envelope = soap_doc.add_element("soapenv:Envelope", {
+          "xmlns:soapenv" => "http://schemas.xmlsoap.org/soap/envelope/"
+        })
+
+        body = envelope.add_element("soapenv:Body")
+
+        body << document.root.deep_clone
       end
     end
 

@@ -798,4 +798,43 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
 
     assert_xml_equal expected_xml, document
   end
+
+  def test_soap_envelope
+    # Create a simple document to wrap
+    inner_doc = Croatia::Fiscalizer::XMLBuilder.echo("Test message")
+
+    # Wrap it in SOAP envelope
+    soap_doc = Croatia::Fiscalizer::XMLBuilder.soap_envelope(inner_doc)
+
+    expected_xml = <<~XML
+      <?xml version='1.0' encoding='UTF-8'?>
+      <soapenv:Envelope xmlns:soapenv='http://schemas.xmlsoap.org/soap/envelope/'>
+        <soapenv:Body>
+          <tns:EchoRequest xmlns:tns='http://www.apis-it.hr/fin/2012/types/f73' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'>Test message</tns:EchoRequest>
+        </soapenv:Body>
+      </soapenv:Envelope>
+    XML
+
+    assert_xml_equal expected_xml, soap_doc
+  end
+
+  def test_soap_envelope_with_empty_document
+    # Create an empty document
+    empty_doc = REXML::Document.new
+    empty_doc.add_element("EmptyElement")
+
+    # Wrap it in SOAP envelope
+    soap_doc = Croatia::Fiscalizer::XMLBuilder.soap_envelope(empty_doc)
+
+    expected_xml = <<~XML
+      <?xml version='1.0' encoding='UTF-8'?>
+      <soapenv:Envelope xmlns:soapenv='http://schemas.xmlsoap.org/soap/envelope/'>
+        <soapenv:Body>
+          <EmptyElement/>
+        </soapenv:Body>
+      </soapenv:Envelope>
+    XML
+
+    assert_xml_equal expected_xml, soap_doc
+  end
 end
