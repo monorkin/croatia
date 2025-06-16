@@ -2,6 +2,8 @@ PATH
   remote: .
   specs:
     croatia (0.4.0)
+      concurrent-ruby
+      connection_pool
       nokogiri
       openssl
       rexml

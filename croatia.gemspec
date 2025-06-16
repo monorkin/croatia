@@ -36,10 +36,12 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = [ "lib" ]
 
+  spec.add_dependency "concurrent-ruby"
+  spec.add_dependency "connection_pool"
+  spec.add_dependency "nokogiri"
   spec.add_dependency "openssl"
   spec.add_dependency "rexml"
   spec.add_dependency "tzinfo"
-  spec.add_dependency "nokogiri"
 
   # For more information and examples about making a new gem, check out our
   # guide at: https://bundler.io/guides/creating_gem.html

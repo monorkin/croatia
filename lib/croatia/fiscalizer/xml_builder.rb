@@ -129,6 +129,15 @@ module Croatia::Fiscalizer::XMLBuilder
       document.root.add_element(signature, { "xmlns" => "http://www.w3.org/2000/09/xmldsig#" })
     end
 
+    def echo(message)
+      REXML::Document.new.tap do |doc|
+        doc.add_element("tns:EchoRequest", {
+          "xmlns:tns" => TNS,
+          "xmlns:xsi" => XSI,
+      }).text = message
+      end
+    end
+
     private
 
       def build(envelope:, invoice:, message_id:, timezone: Croatia::Fiscalizer::TZ, **options)

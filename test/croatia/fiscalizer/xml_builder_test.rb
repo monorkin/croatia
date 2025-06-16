@@ -777,4 +777,25 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
       end
     end
   end
+
+  def test_echo
+    message = "Hello, World!"
+    document = Croatia::Fiscalizer::XMLBuilder.echo(message)
+
+    expected_xml = <<~XML
+      <tns:EchoRequest xmlns:tns='http://www.apis-it.hr/fin/2012/types/f73' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'>Hello, World!</tns:EchoRequest>
+    XML
+
+    assert_xml_equal expected_xml, document
+  end
+
+  def test_echo_with_nil
+    document = Croatia::Fiscalizer::XMLBuilder.echo(nil)
+
+    expected_xml = <<~XML
+      <tns:EchoRequest xmlns:tns='http://www.apis-it.hr/fin/2012/types/f73' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'></tns:EchoRequest>
+    XML
+
+    assert_xml_equal expected_xml, document
+  end
 end

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "concurrent"
+require "connection_pool"
 require "digest/md5"
 require "net/http"
 require "openssl"
@@ -13,57 +15,65 @@ class Croatia::Fiscalizer
   TZ = TZInfo::Timezone.get("Europe/Zagreb")
   QR_CODE_BASE_URL = "https://porezna.gov.hr/rn"
   DEFAULT_PORT = 443
-  DEFAULT_TIMEOUT = 30
+  DEFAULT_KEEP_ALIVE_TIMEOUT = 60
+  DEFAULT_POOL_SIZE = 5
+  DEFAULT_POOL_TIMEOUT = 5
   USER_AGENT = "Croatia/#{Croatia::VERSION} Ruby/#{RUBY_VERSION} (Fiscalization Client; +https://github.com/monorkin/croatia)"
 
   class << self
-    attr_accessor :http_clients
+    def http_pools
+      @http_pools ||= Concurrent::Map.new
+    end
 
     def with_http_client_for(**options, &block)
-      client = http_client_for(**options)
-      retrying = false
+      pool = http_pool_for(**options)
 
-      begin
-        block.call(client)
-      rescue IOError, EOFError, Errno::ECONNRESET
-        raise if retrying
+      pool.with do |client|
+        retrying = false
 
-        retrying = true
-        client.finish rescue nil
-        client.start
+        begin
+          block.call(client)
+        rescue IOError, EOFError, Errno::ECONNRESET
+          raise if retrying
 
-        retry
+          retrying = true
+          client.finish rescue nil
+          client.start
+
+          retry
+        end
       end
     end
 
-    def http_client_for(host:, credential:, port: DEFAULT_PORT, timeout: DEFAULT_TIMEOUT)
-      self.http_clients ||= {}
+    def http_pool_for(host:, credential:, port: DEFAULT_PORT, keep_alive_timeout: nil, size: nil, timeout: nil)
+      size ||= Croatia.config.fiscalization.fetch(:pool_size, DEFAULT_POOL_SIZE)
+      timeout ||= Croatia.config.fiscalization.fetch(:pool_timeout, DEFAULT_POOL_TIMEOUT)
+      keep_alive_timeout ||= Croatia.config.fiscalization.fetch(:keep_alive_timeout, DEFAULT_KEEP_ALIVE_TIMEOUT)
 
       # MD5 is fast, but not cryptographically secure.
       # So the fingerprint is computed on less sensitive information.
       fingerprint = Digest::MD5.hexdigest("#{credential.certificate.serial}:#{credential.certificate.subject}")
       key = "#{host}:#{port}/#{fingerprint}?timeout=#{timeout}"
 
-      client = http_clients[key]
-
-      if client&.active?
-        return client
-      end
-
-      client&.finish rescue nil
-      http_clients[key] = Net::HTTP.new(host, port).tap do |client|
-        client.use_ssl = true
-        client.verify_mode = OpenSSL::SSL::VERIFY_PEER
-        client.cert = credential.certificate
-        client.key = credential.key
-        client.keep_alive_timeout = timeout
-        client.start
+      http_pools.compute_if_absent(key) do
+        ConnectionPool.new(size: pool_size, timeout: pool_timeout) do
+          Net::HTTP.new(host, port).tap do |client|
+            client.use_ssl = true
+            client.verify_mode = OpenSSL::SSL::VERIFY_PEER
+            client.cert = credential.certificate
+            client.key = credential.key
+            client.keep_alive_timeout = keep_alive_timeout if keep_alive_timeout
+            client.start
+          end
+        end
       end
     end
 
-    def shutdown_all_clients
-      http_clients&.each_value { |c| c.finish rescue nil }
-      self.http_clients = {}
+    def shutdown
+      http_pools.each_value do |pool|
+        pool.shutdown { |client| client.finish rescue nil }
+      end
+      http_pools.clear
     end
   end
 

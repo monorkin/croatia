@@ -65,7 +65,8 @@ Croatia.configure do |config|
   # Fiscalization defaults
   config.fiscalization = {
     credential: "path/to/your/credential.p12", # or File.read("path/to/your/credential.p12")
-    password: ENV["FISCALIZATION_CREDENTIAL_PASSWORD"]
+    password: ENV["FISCALIZATION_CREDENTIAL_PASSWORD"],
+  }
   }
   # You can also use separate private key and certificate files instead of a full credential (.p12)
   # config.fiscalization = {
@@ -75,6 +76,13 @@ Croatia.configure do |config|
   #     ca_chain: ENV["FISCALIZATION_CA_CHAIN"] # optional, or "path/to/your/ca_cert.crt"
   #   },
   #   password: "credential_password" # only needed for encrypted private keys
+  # }
+  #
+  # Additional fiscalization options
+  # config.fiscalization = {
+  #   pool_size: 5, # Number of threads to use for fiscalization requests; with Rails you'd want to set this to ENV.fetch("RAILS_MAX_THREADS", 5).to_i
+  #   pool_timeout: 5, # Timeout for each fiscalization request in seconds
+  #   keep_alive_timeout: 60, # For how long to keep a connection open before closing it - speeds up consecutive requests
   # }
 end
 ```
