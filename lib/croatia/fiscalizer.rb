@@ -104,10 +104,13 @@ class Croatia::Fiscalizer
     request = Net::HTTP::Post.new(endpoint).tap do |req|
       req.body = soap_message.to_s
       req.content_type = "text/xml; charset=UTF-8"
-      req["User-Agent"] = USER_AGENT
     end
 
-    response = with_http_client { |client| client.request(request) }
+    response = execute_request(request)
+
+    unwrap_response(response) do |resp|
+      Parser.parse_echo_response(resp.body)
+    end
   end
 
   def fiscalize(invoice:, message_id: SecureRandom.uuid)
@@ -198,5 +201,28 @@ class Croatia::Fiscalizer
 
     def with_http_client(&block)
       self.class.with_http_client_for(host: host, port: port, credential: credential, &block)
+    end
+
+    def execute_request(request)
+      request["User-Agent"] ||= USER_AGENT
+      with_http_client { |client| client.request(request) }
+    end
+
+    def unwrap_response(response, expected: [ Net::HTTPSuccess ], &block)
+      if expected.any? { |status| response.is_a?(status) || response.code.to_i == status }
+        return block.call(response)
+      end
+
+      Result.new.tap do |result|
+        result.add_error(
+          code: nil,
+          message: "Server responded with unexpected status",
+          description: :server_error,
+          details: {
+            statgus: response.code,
+            body: response.body
+          }
+        )
+      end
     end
 end
