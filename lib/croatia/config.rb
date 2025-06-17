@@ -14,6 +14,7 @@ class Croatia::Config
     other: Hash.new(0.0)
   }
   DEFAULT_FISCALIZATION = {
+    endpoint: :production,
     pool_size: Croatia::Fiscalizer::DEFAULT_POOL_SIZE,
     pool_timeout: Croatia::Fiscalizer::DEFAULT_POOL_TIMEOUT,
     keep_alive_timeout: Croatia::Fiscalizer::DEFAULT_KEEP_ALIVE_TIMEOUT

@@ -14,11 +14,14 @@ class Croatia::Fiscalizer
 
   TZ = TZInfo::Timezone.get("Europe/Zagreb")
   QR_CODE_BASE_URL = "https://porezna.gov.hr/rn"
-  DEFAULT_PORT = 443
   DEFAULT_KEEP_ALIVE_TIMEOUT = 60
   DEFAULT_POOL_SIZE = 5
   DEFAULT_POOL_TIMEOUT = 5
   USER_AGENT = "Croatia/#{Croatia::VERSION} Ruby/#{RUBY_VERSION} (Fiscalization Client; +https://github.com/monorkin/croatia)"
+  ENDPOINTS = {
+    production: "https://cis.porezna-uprava.hr:8449",
+    test: "https://cistest.apis-it.hr:8449"
+  }.freeze
 
   class << self
     def http_pools
@@ -45,7 +48,7 @@ class Croatia::Fiscalizer
       end
     end
 
-    def http_pool_for(host:, credential:, port: DEFAULT_PORT, keep_alive_timeout: nil, size: nil, timeout: nil)
+    def http_pool_for(host:, port:, credential:, keep_alive_timeout: nil, size: nil, timeout: nil)
       size ||= Croatia.config.fiscalization.fetch(:pool_size, DEFAULT_POOL_SIZE)
       timeout ||= Croatia.config.fiscalization.fetch(:pool_timeout, DEFAULT_POOL_TIMEOUT)
       keep_alive_timeout ||= Croatia.config.fiscalization.fetch(:keep_alive_timeout, DEFAULT_KEEP_ALIVE_TIMEOUT)
@@ -77,13 +80,34 @@ class Croatia::Fiscalizer
     end
   end
 
-  attr_reader :credential
+  attr_reader :credential, :host, :port, :endpoint
 
-  def initialize(credential: nil, password: nil)
+  def initialize(credential: nil, password: nil, endpoint: nil)
     credential ||= Croatia.config.fiscalization[:credential]
     password ||= Croatia.config.fiscalization[:password]
-
     @credential = load_credential(credential, password)
+
+    endpoint ||= Croatia.config.fiscalization[:endpoint]
+    endpoint = ENDPOINTS.fetch(endpoint, endpoint)
+    endpoint = "//#{endpoint}" if endpoint.is_a?(String) && endpoint.include?("://")
+    uri = URI.parse(endpoint)
+
+    @host = uri.host
+    @port = uri.port || 443
+    @endpoint = uri.path
+  end
+
+  def echo(message)
+    document = XMLBuilder.echo(message)
+    soap_message = XMLBuilder.soap_envelope(document: document).to_s
+
+    request = Net::HTTP::Post.new(endpoint).tap do |req|
+      req.body = soap_message.to_s
+      req.content_type = "text/xml; charset=UTF-8"
+      req["User-Agent"] = USER_AGENT
+    end
+
+    response = with_http_client { |client| client.request(request) }
   end
 
   def fiscalize(invoice:, message_id: SecureRandom.uuid)
@@ -170,5 +194,9 @@ class Croatia::Fiscalizer
       File.exist?(path) && File.file?(path) && File.readable?(path)
     rescue ArgumentError
       false
+    end
+
+    def with_http_client(&block)
+      self.class.with_http_client_for(host: host, port: port, credential: credential, &block)
     end
 end

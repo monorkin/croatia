@@ -15,7 +15,8 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
       config = Croatia::Config.new(
         fiscalization: {
           credential: file_fixture("fake_fiskal1.p12").read,
-          password: file_fixture("fake_fiskal1_password.txt").read.strip
+          password: file_fixture("fake_fiskal1_password.txt").read.strip,
+          endpoint: :test
         }
       )
 
@@ -159,7 +160,8 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
       config = Croatia::Config.new(
         fiscalization: {
           credential: file_fixture("fake_fiskal1.p12").read,
-          password: file_fixture("fake_fiskal1_password.txt").read.strip
+          password: file_fixture("fake_fiskal1_password.txt").read.strip,
+          endpoint: :test
         }
       )
 
@@ -241,7 +243,8 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
       config = Croatia::Config.new(
         fiscalization: {
           credential: file_fixture("fake_fiskal1.p12").read,
-          password: file_fixture("fake_fiskal1_password.txt").read.strip
+          password: file_fixture("fake_fiskal1_password.txt").read.strip,
+          endpoint: :test
         }
       )
 
@@ -322,7 +325,8 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
     config = Croatia::Config.new(
       fiscalization: {
         credential: file_fixture("fake_fiskal1.p12").read,
-        password: file_fixture("fake_fiskal1_password.txt").read.strip
+        password: file_fixture("fake_fiskal1_password.txt").read.strip,
+        endpoint: :test
       }
     )
 
@@ -366,7 +370,8 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
       config = Croatia::Config.new(
         fiscalization: {
           credential: file_fixture("fake_fiskal1.p12").read,
-          password: file_fixture("fake_fiskal1_password.txt").read.strip
+          password: file_fixture("fake_fiskal1_password.txt").read.strip,
+          endpoint: :test
         }
       )
 
@@ -447,7 +452,8 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
       config = Croatia::Config.new(
         fiscalization: {
           credential: file_fixture("fake_fiskal1.p12").read,
-          password: file_fixture("fake_fiskal1_password.txt").read.strip
+          password: file_fixture("fake_fiskal1_password.txt").read.strip,
+          endpoint: :test
         }
       )
 
@@ -531,7 +537,8 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
     config = Croatia::Config.new(
       fiscalization: {
         credential: file_fixture("fake_fiskal1.p12").read,
-        password: file_fixture("fake_fiskal1_password.txt").read.strip
+        password: file_fixture("fake_fiskal1_password.txt").read.strip,
+        endpoint: :test
       }
     )
 
@@ -566,7 +573,8 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
       config = Croatia::Config.new(
         fiscalization: {
           credential: file_fixture("fake_fiskal1.p12").read,
-          password: file_fixture("fake_fiskal1_password.txt").read.strip
+          password: file_fixture("fake_fiskal1_password.txt").read.strip,
+          endpoint: :test
         }
       )
 
@@ -732,7 +740,8 @@ class Croatia::Fiscalizer::XMLBuilderTest < Minitest::Test
       config = Croatia::Config.new(
         fiscalization: {
           credential: file_fixture("fake_fiskal1.p12").read,
-          password: file_fixture("fake_fiskal1_password.txt").read.strip
+          password: file_fixture("fake_fiskal1_password.txt").read.strip,
+          endpoint: :test
         }
       )
 

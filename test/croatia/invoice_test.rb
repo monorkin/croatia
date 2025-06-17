@@ -851,7 +851,8 @@ class Croatia::InvoiceTest < Minitest::Test
     config = Croatia::Config.new(
       fiscalization: {
         credential: credential_data[:p12],
-        password: credential_data[:password]
+        password: credential_data[:password],
+        endpoint: :test
       }
     )
 
@@ -887,7 +888,8 @@ class Croatia::InvoiceTest < Minitest::Test
     config = Croatia::Config.new(
       fiscalization: {
         credential: credential_data[:p12],
-        password: credential_data[:password]
+        password: credential_data[:password],
+        endpoint: :test
       }
     )
 
